@@ -19,7 +19,7 @@ public class Order extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Status status;
+    private OrderStatus orderStatus;
 
     private String instruction;
 
@@ -35,8 +35,8 @@ public class Order extends BaseTimeEntity {
     private Member member;
 
     @Builder
-    public Order(Status status, String instruction, int totalAmount, Shop shop, Member member) {
-        this.status = status;
+    public Order(OrderStatus orderStatus, String instruction, int totalAmount, Shop shop, Member member) {
+        this.orderStatus = orderStatus;
         this.instruction = instruction;
         this.totalAmount = totalAmount;
         this.shop = shop;
@@ -45,6 +45,6 @@ public class Order extends BaseTimeEntity {
 
     @PrePersist
     public void prePersist() {
-        this.status = this.status == null ? Status.PENDING : this.status;
+        this.orderStatus = this.orderStatus == null ? OrderStatus.PENDING : this.orderStatus;
     }
 }

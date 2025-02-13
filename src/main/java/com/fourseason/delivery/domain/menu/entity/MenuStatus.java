@@ -1,12 +1,12 @@
 package com.fourseason.delivery.domain.menu.entity;
 
-public enum Status {
+public enum MenuStatus {
 
     SHOW,
     HIDE,
     SOLD_OUT;
 
-    public static Status of(String status) {
+    public static MenuStatus of(String status) {
         return valueOf(status);
     }
 }

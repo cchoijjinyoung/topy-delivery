@@ -7,7 +7,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Getter
@@ -29,23 +28,23 @@ public class Menu extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Status status;
+    private MenuStatus menuStatus;
 
     @ManyToOne
     @JoinColumn(name = "shop_id")
     private Shop shop;
 
     @Builder
-    public Menu(String name, String description, int price, Status status, Shop shop) {
+    public Menu(String name, String description, int price, MenuStatus menuStatus, Shop shop) {
         this.name = name;
         this.description = description;
         this.price = price;
-        this.status = status;
+        this.menuStatus = menuStatus;
         this.shop = shop;
     }
 
     @PrePersist
     public void prePersist() {
-        this.status = this.status == null ? Status.SHOW : this.status;
+        this.menuStatus = this.menuStatus == null ? MenuStatus.SHOW : this.menuStatus;
     }
 }

@@ -1,13 +1,11 @@
 package com.fourseason.delivery.domain.order.entity;
 
-import com.fourseason.delivery.domain.member.entity.Role;
-
-public enum Status {
+public enum OrderStatus {
     PENDING,
     CANCEL,
     COMPLETED;
 
-    public static Status of(String status) {
+    public static OrderStatus of(String status) {
         return valueOf(status);
     }
 }
