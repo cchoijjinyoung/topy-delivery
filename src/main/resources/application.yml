@@ -3,3 +3,8 @@ spring:
     username: admin
     url: jdbc:postgresql://localhost:5432/fourseason?serverTimezone=Asia/Seoul
     password: 1234
+
+jwt:
+  issuer: "s1jin-delivery"
+  secretKey: "7Iqk7YyM66W07YOA7L2U65Sp7YG065+9U3ByaW5n6rCV7J2Y7Yqc7YSw7LWc7JuQ67mI7J6F64uI64ukLg=="
+  expiration: 3600000
