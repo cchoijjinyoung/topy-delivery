@@ -1,0 +1,43 @@
+package com.fourseason.delivery.domain.member.entity;
+
+import com.fourseason.delivery.global.entity.BaseTimeEntity;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Getter
+@Table(name = "p_member")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Member extends BaseTimeEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String username;
+
+    @Column(nullable = false)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false)
+    private String phoneNumber;
+
+    @Column(nullable = false)
+    private Role role;
+
+    @Builder
+    public Member(String username, String email, String password, String phoneNumber, Role role) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.phoneNumber = phoneNumber;
+        this.role = role;
+    }
+}
