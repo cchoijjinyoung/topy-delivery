@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -13,7 +16,8 @@ import lombok.NoArgsConstructor;
 public class ShopImage extends BaseTimeEntity {
 
     @Id
-    private String id;
+    @UuidGenerator
+    private UUID id;
 
     @Column(nullable = false)
     private String imageUrl;
