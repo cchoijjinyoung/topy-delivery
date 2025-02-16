@@ -9,11 +9,13 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.group.GroupBy;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +35,16 @@ public class ShopRepositoryCustom {
     public PageResponseDto<ShopResponseDto> findShopListWithPage(PageRequestDto pageRequestDto) {
         List<ShopResponseDto> content = getShopList(pageRequestDto);
         long total = getTotalDataCount(pageRequestDto);
+
+        return new PageResponseDto<>(content, total);
+    }
+
+    /**
+     * 가게 검색 조회
+     */
+    public PageResponseDto<ShopResponseDto> searchShopWithPage(PageRequestDto pageRequestDto, String keyword) {
+        List<ShopResponseDto> content = getShopList(pageRequestDto, keyword);
+        long total = getTotalDataCount(pageRequestDto, keyword);
 
         return new PageResponseDto<>(content, total);
     }
@@ -61,6 +73,29 @@ public class ShopRepositoryCustom {
     }
 
     /**
+     * 검색 결과 페이징 조회 메서드
+     */
+    private List<ShopResponseDto> getShopList(PageRequestDto pageRequestDto, String keyword) {
+        return jpaQueryFactory
+            .select(Projections.constructor(ShopResponseDto.class,
+                Expressions.stringTemplate("CAST({0} AS string)", shop.id),
+                shop.name,
+                shop.description,
+                shop.tel,
+                shop.address,
+                shop.detailAddress,
+                GroupBy.list(shopImage.imageUrl)
+            ))
+            .from(shop)
+            .leftJoin(shopImage).on(shop.id.eq(shopImage.shop.id))
+            .where(getWhereConditions(pageRequestDto, keyword))
+            .offset(pageRequestDto.getFirstIndex())
+            .limit(pageRequestDto.getSize())
+            .orderBy(getOrderConditions(pageRequestDto))
+            .fetch();
+    }
+
+    /**
      * 전체 데이터 수 조회
      */
     private long getTotalDataCount(PageRequestDto pageRequestDto) {
@@ -74,6 +109,19 @@ public class ShopRepositoryCustom {
     }
 
     /**
+     * 전체 데이터 수 조회 - keyword
+     */
+    private long getTotalDataCount(PageRequestDto pageRequestDto, String keyword) {
+        return Optional.ofNullable(jpaQueryFactory
+                .select(shop.count())
+                .from(shop)
+                .where(getWhereConditions(pageRequestDto, keyword))
+                .fetchOne()
+            )
+            .orElse(0L);
+    }
+
+    /**
      * 조회 조건
      */
     private BooleanBuilder getWhereConditions(PageRequestDto pageRequestDto) {
@@ -81,6 +129,25 @@ public class ShopRepositoryCustom {
 
         return builder.and(shop.deletedAt.isNull());
 
+    }
+
+    /**
+     * 조회 조건 - keyword
+     */
+    private BooleanBuilder getWhereConditions(PageRequestDto pageRequestDto, String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            throw new CustomException(ShopErrorCode.NO_KEYWORD);
+        }
+
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(shop.deletedAt.isNull());
+
+        BooleanExpression keywordCondition = shop.name.containsIgnoreCase(keyword)
+                .or(shop.description.containsIgnoreCase(keyword));
+
+        builder.and(keywordCondition);
+
+        return builder;
     }
 
     /**

@@ -7,6 +7,7 @@ import com.fourseason.delivery.domain.shop.service.ShopService;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -65,6 +66,18 @@ public class ShopController {
         shopService.deleteShop(UUID.fromString(id));
         return ResponseEntity.ok().build();
 
+    }
+
+    /**
+     * 가게 검색 API
+     */
+    @GetMapping("/search")
+    public ResponseEntity<PageResponseDto<ShopResponseDto>> searchShop(@RequestParam @NotBlank(message = "검색어를 입력해주세요.") String keyword,
+                                                                       @RequestParam(defaultValue = "1") int page,
+                                                                       @RequestParam(defaultValue = "10") int size,
+                                                                       @RequestParam(defaultValue = "latest") String orderby) {
+        PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderby);
+        return ResponseEntity.ok(shopService.searchShop(pageRequestDto, keyword));
     }
 
 }

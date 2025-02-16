@@ -91,4 +91,9 @@ public class ShopService {
 
         shop.deleteOf(member.getUsername());
     }
+
+    @Transactional
+    public PageResponseDto<ShopResponseDto> searchShop(PageRequestDto pageRequestDto, String keyword) {
+        return shopRepositoryCustom.searchShopWithPage(pageRequestDto, keyword);
+    }
 }
