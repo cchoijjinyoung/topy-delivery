@@ -1,5 +1,8 @@
 package com.fourseason.delivery.domain.menu.entity;
 
+import com.fourseason.delivery.domain.member.entity.Member;
+import com.fourseason.delivery.domain.menu.dto.request.CreateMenuRequestDto;
+import com.fourseason.delivery.domain.menu.dto.request.UpdateMenuRequestDto;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
@@ -7,6 +10,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -15,7 +21,8 @@ import lombok.NoArgsConstructor;
 public class Menu extends BaseTimeEntity {
 
     @Id
-    private String id;
+    @UuidGenerator
+    private UUID id;
 
     @Column(nullable = false)
     private String name;
@@ -43,8 +50,23 @@ public class Menu extends BaseTimeEntity {
         this.shop = shop;
     }
 
-    @PrePersist
-    public void prePersist() {
-        this.menuStatus = this.menuStatus == null ? MenuStatus.SHOW : this.menuStatus;
+    public static Menu addOf(CreateMenuRequestDto dto, Shop shop) {
+        return Menu.builder()
+            .name(dto.name())
+            .description(dto.description())
+            .price(dto.price())
+            .menuStatus(MenuStatus.SHOW)
+            .shop(shop)
+            .build();
+    }
+
+    public void updateOf(UpdateMenuRequestDto dto) {
+        this.name = dto.name();
+        this.description = dto.description();
+        this.price = dto.price();
+    }
+
+    public void deleteOf(String deletedBy) {
+        super.deleteOf(deletedBy);
     }
 }
