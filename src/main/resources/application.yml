@@ -3,3 +3,18 @@ spring:
     username: admin
     url: jdbc:postgresql://localhost:5432/fourseason?serverTimezone=Asia/Seoul
     password: 1234
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+logging:
+  level:
+    sql: debug
+
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true

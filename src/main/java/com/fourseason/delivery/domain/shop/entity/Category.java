@@ -1,11 +1,11 @@
 package com.fourseason.delivery.domain.shop.entity;
 
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -13,8 +13,17 @@ import lombok.Getter;
 public class Category extends BaseTimeEntity {
 
     @Id
-    private String id;
+    @UuidGenerator
+    private UUID id;
 
     @Column(nullable = false)
     private String name;
+
+    public Category(String name) {
+        this.name = name;
+    }
+
+    public Category() {
+
+    }
 }
