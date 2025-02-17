@@ -27,8 +27,8 @@ public class ShopController {
     @GetMapping
     public ResponseEntity<PageResponseDto<ShopResponseDto>> getShopList(@RequestParam(defaultValue = "1") int page,
                                                                         @RequestParam(defaultValue = "10") int size,
-                                                                        @RequestParam(defaultValue = "latest") String orderby) {
-        PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderby);
+                                                                        @RequestParam(defaultValue = "latest") String orderBy) {
+        PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderBy);
         return ResponseEntity.ok(shopService.getShopList(pageRequestDto));
     }
 
@@ -75,8 +75,8 @@ public class ShopController {
     public ResponseEntity<PageResponseDto<ShopResponseDto>> searchShop(@RequestParam @NotBlank(message = "검색어를 입력해주세요.") String keyword,
                                                                        @RequestParam(defaultValue = "1") int page,
                                                                        @RequestParam(defaultValue = "10") int size,
-                                                                       @RequestParam(defaultValue = "latest") String orderby) {
-        PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderby);
+                                                                       @RequestParam(defaultValue = "latest") String orderBy) {
+        PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderBy);
         return ResponseEntity.ok(shopService.searchShop(pageRequestDto, keyword));
     }
 
