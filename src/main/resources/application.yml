@@ -6,5 +6,6 @@ spring:
 
 jwt:
   issuer: "s1jin-delivery"
-  secretKey: "7Iqk7YyM66W07YOA7L2U65Sp7YG065+9U3ByaW5n6rCV7J2Y7Yqc7YSw7LWc7JuQ67mI7J6F64uI64ukLg=="
-  expiration: 3600000
+  access-expiration: 30 # Access Token: min
+  refresh-expiration: 7 # Refresh Token: day
+  secret: "7Iqk7YyM66W07YOA7L2U65Sp7YG065+9U3ByaW5n6rCV7J2Y7Yqc7YSw7LWc7JuQ67mI7J6F64uI64ukLg=="
