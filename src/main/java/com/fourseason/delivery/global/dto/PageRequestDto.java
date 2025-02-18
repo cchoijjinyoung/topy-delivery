@@ -1,7 +1,5 @@
 package com.fourseason.delivery.global.dto;
 
-import com.fourseason.delivery.global.dto.exception.PageErrorCode;
-import com.fourseason.delivery.global.exception.CustomException;
 import lombok.Builder;
 import lombok.Getter;
 

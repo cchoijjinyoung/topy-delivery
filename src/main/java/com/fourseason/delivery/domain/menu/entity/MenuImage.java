@@ -1,11 +1,13 @@
 package com.fourseason.delivery.domain.menu.entity;
 
-import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -14,7 +16,8 @@ import lombok.NoArgsConstructor;
 public class MenuImage extends BaseTimeEntity {
 
     @Id
-    private String id;
+    @UuidGenerator
+    private UUID id;
 
     @Column(nullable = false)
     private String imageUrl;

@@ -36,8 +36,8 @@ public class ShopController {
      * 가게 상세 조회 API
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ShopResponseDto> getShop(@PathVariable String id) {
-        return ResponseEntity.ok(shopService.getShop(UUID.fromString(id)));
+    public ResponseEntity<ShopResponseDto> getShop(@PathVariable UUID id) {
+        return ResponseEntity.ok(shopService.getShop(id));
     }
 
     /**
@@ -53,8 +53,8 @@ public class ShopController {
      * 가게 수정 API
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Void> updateShop(@PathVariable String id, @RequestBody @Valid UpdateShopRequestDto updateShopRequestDto) {
-        shopService.updateShop(UUID.fromString(id), updateShopRequestDto);
+    public ResponseEntity<Void> updateShop(@PathVariable UUID id, @RequestBody @Valid UpdateShopRequestDto updateShopRequestDto) {
+        shopService.updateShop(id, updateShopRequestDto);
         return ResponseEntity.ok().build();
     }
 
@@ -62,8 +62,8 @@ public class ShopController {
      * 가게 삭제 API
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteShop(@PathVariable String id) {
-        shopService.deleteShop(UUID.fromString(id));
+    public ResponseEntity<Void> deleteShop(@PathVariable UUID id) {
+        shopService.deleteShop(id);
         return ResponseEntity.ok().build();
 
     }

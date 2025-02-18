@@ -34,7 +34,7 @@ public class ShopRepositoryCustom {
      */
     public PageResponseDto<ShopResponseDto> findShopListWithPage(PageRequestDto pageRequestDto) {
         List<ShopResponseDto> content = getShopList(pageRequestDto);
-        long total = getTotalDataCount(pageRequestDto);
+        long total = getTotalDataCount();
 
         return new PageResponseDto<>(content, total);
     }
@@ -44,7 +44,7 @@ public class ShopRepositoryCustom {
      */
     public PageResponseDto<ShopResponseDto> searchShopWithPage(PageRequestDto pageRequestDto, String keyword) {
         List<ShopResponseDto> content = getShopList(pageRequestDto, keyword);
-        long total = getTotalDataCount(pageRequestDto, keyword);
+        long total = getTotalDataCount(keyword);
 
         return new PageResponseDto<>(content, total);
     }
@@ -65,7 +65,7 @@ public class ShopRepositoryCustom {
             ))
             .from(shop)
             .leftJoin(shopImage).on(shop.id.eq(shopImage.shop.id))
-            .where(getWhereConditions(pageRequestDto))
+            .where(getWhereConditions())
             .offset(pageRequestDto.getFirstIndex())
             .limit(pageRequestDto.getSize())
             .orderBy(getOrderConditions(pageRequestDto))
@@ -88,7 +88,7 @@ public class ShopRepositoryCustom {
             ))
             .from(shop)
             .leftJoin(shopImage).on(shop.id.eq(shopImage.shop.id))
-            .where(getWhereConditions(pageRequestDto, keyword))
+            .where(getWhereConditions(keyword))
             .offset(pageRequestDto.getFirstIndex())
             .limit(pageRequestDto.getSize())
             .orderBy(getOrderConditions(pageRequestDto))
@@ -98,11 +98,11 @@ public class ShopRepositoryCustom {
     /**
      * 전체 데이터 수 조회
      */
-    private long getTotalDataCount(PageRequestDto pageRequestDto) {
+    private long getTotalDataCount() {
         return Optional.ofNullable(jpaQueryFactory
                 .select(shop.count())
                 .from(shop)
-                .where(getWhereConditions(pageRequestDto))
+                .where(getWhereConditions())
                 .fetchOne()
             )
             .orElse(0L);
@@ -111,11 +111,11 @@ public class ShopRepositoryCustom {
     /**
      * 전체 데이터 수 조회 - keyword
      */
-    private long getTotalDataCount(PageRequestDto pageRequestDto, String keyword) {
+    private long getTotalDataCount(String keyword) {
         return Optional.ofNullable(jpaQueryFactory
                 .select(shop.count())
                 .from(shop)
-                .where(getWhereConditions(pageRequestDto, keyword))
+                .where(getWhereConditions(keyword))
                 .fetchOne()
             )
             .orElse(0L);
@@ -124,7 +124,7 @@ public class ShopRepositoryCustom {
     /**
      * 조회 조건
      */
-    private BooleanBuilder getWhereConditions(PageRequestDto pageRequestDto) {
+    private BooleanBuilder getWhereConditions() {
         BooleanBuilder builder = new BooleanBuilder();
 
         return builder.and(shop.deletedAt.isNull());
@@ -134,7 +134,7 @@ public class ShopRepositoryCustom {
     /**
      * 조회 조건 - keyword
      */
-    private BooleanBuilder getWhereConditions(PageRequestDto pageRequestDto, String keyword) {
+    private BooleanBuilder getWhereConditions(String keyword) {
         if (!StringUtils.hasText(keyword)) {
             throw new CustomException(ShopErrorCode.NO_KEYWORD);
         }
