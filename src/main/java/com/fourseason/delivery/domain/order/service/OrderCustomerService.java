@@ -10,7 +10,7 @@ import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.menu.entity.Menu;
 import com.fourseason.delivery.domain.menu.repository.MenuRepository;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
-import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto.MenuDTO;
+import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto.MenuDto;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderMenu;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class OrderService {
+public class OrderCustomerService {
 
   private final OrderRepository orderRepository;
   private final ShopRepository shopRepository;
@@ -46,22 +46,22 @@ public class OrderService {
     Shop shop = shopRepository.findById(request.shopId())
         .orElseThrow(() -> new CustomException(SHOP_NOT_FOUND));
 
-    List<UUID> requestMenuIds = request.menuList().stream().map(MenuDTO::menuId).toList();
+    List<UUID> requestMenuIds = request.menuList().stream().map(MenuDto::menuId).toList();
     List<Menu> menuList = menuRepository.findByIdIn(requestMenuIds);
 
     if (requestMenuIds.size() != menuList.size()) {
       throw new CustomException(MENU_NOT_FOUND);
     }
 
-    Map<UUID, MenuDTO> menuDTOmap = request.menuList().stream()
-        .collect(toMap(MenuDTO::menuId, menuDTO -> menuDTO));
+    Map<UUID, MenuDto> menuDtoMap = request.menuList().stream()
+        .collect(toMap(MenuDto::menuId, menuDto -> menuDto));
 
     int totalPrice = 0;
     List<OrderMenu> orderMenuList = new ArrayList<>();
 
     for (Menu menu : menuList) {
       OrderMenu orderMenu = OrderMenu.addOf(menu, menu.getPrice(),
-          menuDTOmap.get(menu.getId()).quantity());
+          menuDtoMap.get(menu.getId()).quantity());
 
       totalPrice += menu.getPrice();
       orderMenuList.add(orderMenu);

@@ -14,7 +14,7 @@ import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.menu.entity.Menu;
 import com.fourseason.delivery.domain.menu.repository.MenuRepository;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
-import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto.MenuDTO;
+import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto.MenuDto;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
 import com.fourseason.delivery.domain.shop.entity.Shop;
@@ -34,7 +34,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class OrderServiceTest {
+class OrderCustomerServiceTest {
 
   @Mock
   OrderRepository orderRepository;
@@ -49,25 +49,25 @@ class OrderServiceTest {
   MenuRepository menuRepository;
 
   @InjectMocks
-  OrderService orderService;
+  OrderCustomerService orderCustomerService;
 
   @Nested
   class createOrderTest {
 
-    MenuDTO menuDTO1;
-    List<MenuDTO> menuList;
+    MenuDto menuDto1;
+    List<MenuDto> menuList;
     CreateOrderRequestDto request;
     Long memberId;
 
     @BeforeEach
     void setup() {
-      menuDTO1 = MenuDTO.builder()
+      menuDto1 = MenuDto.builder()
           .menuId(UUID.randomUUID())
           .quantity(2)
           .build();
 
       menuList = new ArrayList<>();
-      menuList.add(menuDTO1);
+      menuList.add(menuDto1);
 
       request = CreateOrderRequestDto.builder()
           .shopId(UUID.randomUUID())
@@ -87,7 +87,7 @@ class OrderServiceTest {
       // when
       // then
       assertThatThrownBy(
-          () -> orderService.createOrder(request, memberId))
+          () -> orderCustomerService.createOrder(request, memberId))
           .isInstanceOf(CustomException.class)
           .hasMessage("해당 회원을 찾을 수 없습니다.");
     }
@@ -105,7 +105,7 @@ class OrderServiceTest {
       // when
       // then
       assertThatThrownBy(
-          () -> orderService.createOrder(request, memberId))
+          () -> orderCustomerService.createOrder(request, memberId))
           .isInstanceOf(CustomException.class)
           .hasMessage("해당 가게를 찾을 수 없습니다.");
     }
@@ -125,7 +125,7 @@ class OrderServiceTest {
 
       // when
       // then
-      assertThatThrownBy(() -> orderService.createOrder(request, memberId))
+      assertThatThrownBy(() -> orderCustomerService.createOrder(request, memberId))
           .isInstanceOf(CustomException.class)
           .hasMessage("해당 메뉴를 찾을 수 없습니다.");
     }
@@ -154,7 +154,7 @@ class OrderServiceTest {
       when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
 
       // when
-      UUID savedOrderId = orderService.createOrder(request, memberId);
+      UUID savedOrderId = orderCustomerService.createOrder(request, memberId);
 
       // then
       verify(orderRepository).save(any());

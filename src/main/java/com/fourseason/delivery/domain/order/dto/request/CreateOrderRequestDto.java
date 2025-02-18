@@ -16,14 +16,14 @@ public record CreateOrderRequestDto(
     String address,
 
     @NotEmpty(message = "주문 상품이 없습니다.")
-    List<MenuDTO> menuList,
+    List<MenuDto> menuList,
 
     String instruction
 
 ) {
 
   @Builder
-  public record MenuDTO(
+  public record MenuDto(
       @NotBlank
       UUID menuId,
 

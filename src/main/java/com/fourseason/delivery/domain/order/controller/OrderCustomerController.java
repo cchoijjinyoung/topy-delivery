@@ -1,7 +1,7 @@
 package com.fourseason.delivery.domain.order.controller;
 
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
-import com.fourseason.delivery.domain.order.service.OrderService;
+import com.fourseason.delivery.domain.order.service.OrderCustomerService;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -14,19 +14,20 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/orders")
-public class OrderController {
+@RequestMapping("/api/customer/orders")
+public class OrderCustomerController {
 
-  private final OrderService orderService;
+  private final OrderCustomerService orderCustomerService;
 
   /**
    * 주문 요청 API
+   * role: CUSTOMER
    */
   @PostMapping
   public ResponseEntity<UUID> createOrder(
       @RequestBody @Valid CreateOrderRequestDto request,
       @RequestParam Long memberId // TODO: @AuthenticationPrincipal 로 변경
   ) {
-    return ResponseEntity.ok(orderService.createOrder(request, memberId));
+    return ResponseEntity.ok(orderCustomerService.createOrder(request, memberId));
   }
 }
