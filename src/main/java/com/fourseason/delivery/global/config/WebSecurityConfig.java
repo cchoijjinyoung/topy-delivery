@@ -1,16 +1,19 @@
 package com.fourseason.delivery.global.config;
 
 import com.fourseason.delivery.global.auth.JwtUtil;
-import com.fourseason.delivery.global.auth.UserDetailsServiceImpl;
-import com.fourseason.delivery.global.auth.filter.JwtAuthorizationFilter;
+import com.fourseason.delivery.global.auth.filter.JwtCheckFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -24,7 +27,6 @@ import java.util.List;
 public class WebSecurityConfig {
 
     private final JwtUtil jwtUtil;
-    private final UserDetailsServiceImpl userDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -32,8 +34,8 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    JwtAuthorizationFilter jwtAuthorizationFilter() {
-        return new JwtAuthorizationFilter(jwtUtil, userDetailsService);
+    JwtCheckFilter jwtAuthorizationFilter() {
+        return new JwtCheckFilter(jwtUtil);
     }
 
     @Bean
@@ -43,6 +45,7 @@ public class WebSecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable);
         http.formLogin(AbstractHttpConfigurer::disable);
         http.logout(AbstractHttpConfigurer::disable);
+        http.httpBasic(AbstractHttpConfigurer::disable);
 
         http.sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -72,6 +75,17 @@ public class WebSecurityConfig {
         source.registerCorsConfiguration("/**", corsConfiguration);
 
         return source;
+    }
 
+    @Bean
+    UserDetailsService testOnlyUser(PasswordEncoder passwordEncoder) {
+        User.UserBuilder user = User.builder();
+        UserDetails alice = user
+                .username("alice")
+                .password(passwordEncoder.encode("1234"))
+                .roles("CUSTOMER")
+                .build();
+
+        return new InMemoryUserDetailsManager(alice);
     }
 }
