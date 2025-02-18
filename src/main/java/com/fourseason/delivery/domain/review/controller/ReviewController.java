@@ -23,9 +23,8 @@ public class ReviewController {
      */
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Void> createReview(@PathVariable String order_id,
-                                             @RequestPart("review") ReviewRequestDto reviewRequestDto,
-                                             @RequestPart(value = "images", required = false)List<MultipartFile> images) {
-        reviewService.createReview(order_id, reviewRequestDto, images);
+                                             @RequestPart("review") ReviewRequestDto reviewRequestDto) {
+        reviewService.createReview(order_id, reviewRequestDto);
         return ResponseEntity.ok().build();
     }
 

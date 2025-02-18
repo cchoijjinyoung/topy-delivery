@@ -54,8 +54,8 @@ public class Review extends BaseTimeEntity {
 
     public static Review addOf(ReviewRequestDto dto, Order order) {
         return Review.builder()
-                .content(dto.getContent())
-                .rating(dto.getRating())
+                .content(dto.content())
+                .rating(dto.rating())
                 .order(order)
                 .member(order.getMember())
                 .shop(order.getShop())
@@ -63,7 +63,7 @@ public class Review extends BaseTimeEntity {
     }
 
     public void updateOf(ReviewRequestDto dto) {
-        this.content = dto.getContent();
-        this.rating = dto.getRating();
+        this.content = dto.content();
+        this.rating = dto.rating();
     }
 }
