@@ -38,7 +38,7 @@ public class MenuRepositoryCustom {
      */
     public PageResponseDto<MenuResponseDto> findMenuListWithPage(UUID shopId, PageRequestDto pageRequestDto) {
         List<MenuResponseDto> content = getMenuList(shopId, pageRequestDto);
-        long total = getTotalDataCount(shopId, pageRequestDto);
+        long total = getTotalDataCount(shopId);
 
         return new PageResponseDto<>(content, total);
     }
@@ -48,7 +48,7 @@ public class MenuRepositoryCustom {
      */
     public PageResponseDto<MenuResponseDto> searchMenuWithPage(UUID shopId, PageRequestDto pageRequestDto, String keyword) {
         List<MenuResponseDto> content = getMenuList(shopId, pageRequestDto, keyword);
-        long total = getTotalDataCount(shopId, pageRequestDto, keyword);
+        long total = getTotalDataCount(shopId, keyword);
 
         return new PageResponseDto<>(content, total);
     }
@@ -67,7 +67,7 @@ public class MenuRepositoryCustom {
             ))
             .from(menu)
             .leftJoin(menuImage).on(menu.id.eq(menuImage.menu.id))
-            .where(getWhereConditions(shopId, pageRequestDto))
+            .where(getWhereConditions(shopId))
             .offset(pageRequestDto.getFirstIndex())
             .limit(pageRequestDto.getSize())
             .orderBy(getOrderConditions(pageRequestDto))
@@ -88,7 +88,7 @@ public class MenuRepositoryCustom {
             ))
             .from(menu)
             .leftJoin(menuImage).on(menu.id.eq(menuImage.menu.id))
-            .where(getWhereConditions(shopId, pageRequestDto, keyword))
+            .where(getWhereConditions(shopId, keyword))
             .offset(pageRequestDto.getFirstIndex())
             .limit(pageRequestDto.getSize())
             .orderBy(getOrderConditions(pageRequestDto))
@@ -98,11 +98,11 @@ public class MenuRepositoryCustom {
     /**
      * 전체 데이터 수 조회
      */
-    private long getTotalDataCount(UUID shopId, PageRequestDto pageRequestDto) {
+    private long getTotalDataCount(UUID shopId) {
         return Optional.ofNullable(jpaQueryFactory
                 .select(menu.count())
                 .from(menu)
-                .where(getWhereConditions(shopId, pageRequestDto))
+                .where(getWhereConditions(shopId))
                 .fetchOne()
             )
             .orElse(0L);
@@ -111,11 +111,11 @@ public class MenuRepositoryCustom {
     /**
      * 전체 데이터 수 조회 - keyword
      */
-    private long getTotalDataCount(UUID shopId, PageRequestDto pageRequestDto, String keyword) {
+    private long getTotalDataCount(UUID shopId, String keyword) {
         return Optional.ofNullable(jpaQueryFactory
                 .select(menu.count())
                 .from(menu)
-                .where(getWhereConditions(shopId, pageRequestDto, keyword))
+                .where(getWhereConditions(shopId, keyword))
                 .fetchOne()
             )
             .orElse(0L);
@@ -124,7 +124,7 @@ public class MenuRepositoryCustom {
     /**
      * 조회 조건
      */
-    private BooleanBuilder getWhereConditions(UUID shopId, PageRequestDto pageRequestDto) {
+    private BooleanBuilder getWhereConditions(UUID shopId) {
         BooleanBuilder builder = new BooleanBuilder();
 
         return builder.and(menu.deletedAt.isNull())
@@ -134,7 +134,7 @@ public class MenuRepositoryCustom {
     /**
      * 조회 조건 - keyword
      */
-    private BooleanBuilder getWhereConditions(UUID shopId, PageRequestDto pageRequestDto, String keyword) {
+    private BooleanBuilder getWhereConditions(UUID shopId, String keyword) {
         if (!StringUtils.hasText(keyword)) {
             throw new CustomException(MenuErrorCode.NO_KEYWORD);
         }

@@ -25,12 +25,12 @@ public class MenuController {
      * 메뉴 목록 조회 API
      */
     @GetMapping
-    public ResponseEntity<PageResponseDto<MenuResponseDto>> getMenuList(@RequestParam String shopId,
+    public ResponseEntity<PageResponseDto<MenuResponseDto>> getMenuList(@RequestParam UUID shopId,
                                                                         @RequestParam(defaultValue = "1") int page,
                                                                         @RequestParam(defaultValue = "10") int size,
                                                                         @RequestParam(defaultValue = "latest") String orderBy) {
         PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderBy);
-        return ResponseEntity.ok(menuService.getMenuList(UUID.fromString(shopId), pageRequestDto));
+        return ResponseEntity.ok(menuService.getMenuList(shopId, pageRequestDto));
     }
 
     /**
@@ -54,9 +54,9 @@ public class MenuController {
      * 메뉴 수정 API
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Void> updateMenu(@PathVariable String id,
+    public ResponseEntity<Void> updateMenu(@PathVariable UUID id,
                                            @RequestBody @Valid UpdateMenuRequestDto updateMenuRequestDto) {
-        menuService.updateMenu(UUID.fromString(id), updateMenuRequestDto);
+        menuService.updateMenu(id, updateMenuRequestDto);
         return ResponseEntity.ok().build();
     }
 
@@ -64,8 +64,8 @@ public class MenuController {
      * 메뉴 삭제 API
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMenu(@PathVariable String id) {
-        menuService.deleteMenu(UUID.fromString(id));
+    public ResponseEntity<Void> deleteMenu(@PathVariable UUID id) {
+        menuService.deleteMenu(id);
         return ResponseEntity.ok().build();
     }
 
@@ -74,11 +74,11 @@ public class MenuController {
      */
     @GetMapping("/search")
     public ResponseEntity<PageResponseDto<MenuResponseDto>> searchMenu(@RequestParam @NotBlank(message = "검색어를 입력해주세요.") String keyword,
-                                                                       @RequestParam @NotBlank(message = "가게 id 값을 입력해주세요.") String shopId,
+                                                                       @RequestParam @NotBlank(message = "가게 id 값을 입력해주세요.") UUID shopId,
                                                                        @RequestParam(defaultValue = "1") int page,
                                                                        @RequestParam(defaultValue = "10") int size,
                                                                        @RequestParam(defaultValue = "latest") String orderBy) {
         PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderBy);
-        return ResponseEntity.ok(menuService.searchMenu(UUID.fromString(shopId), pageRequestDto, keyword));
+        return ResponseEntity.ok(menuService.searchMenu(shopId, pageRequestDto, keyword));
     }
 }
