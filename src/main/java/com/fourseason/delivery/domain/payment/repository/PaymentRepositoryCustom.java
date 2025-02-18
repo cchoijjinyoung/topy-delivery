@@ -2,8 +2,8 @@ package com.fourseason.delivery.domain.payment.repository;
 
 
 import com.fourseason.delivery.domain.member.entity.Member;
-import com.fourseason.delivery.domain.payment.dto.responseDto.PaymentResponseDto;
-import com.fourseason.delivery.domain.shop.exception.ShopErrorCode;
+import com.fourseason.delivery.domain.payment.dto.response.PaymentResponseDto;
+import com.fourseason.delivery.domain.payment.exception.PaymentErrorCode;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
@@ -29,9 +29,9 @@ public class PaymentRepositoryCustom {
     /**
      * 관리자 결제 전체 조회
      */
-    public PageResponseDto<PaymentResponseDto> findPaymentListWithPage(PageRequestDto pageRequestDto) {
+    public PageResponseDto<PaymentResponseDto> findPaymentListWithPage(final PageRequestDto pageRequestDto) {
         List<PaymentResponseDto> content = getPaymentList(pageRequestDto);
-        long total = getTotalDataCount(pageRequestDto);
+        long total = getTotalDataCount();
 
         return new PageResponseDto<>(content, total);
     }
@@ -39,9 +39,9 @@ public class PaymentRepositoryCustom {
     /**
      * 사용자 결제 전체 조회
      */
-    public PageResponseDto<PaymentResponseDto> findPaymentListByMemberWithPage(PageRequestDto pageRequestDto, Member member) {
+    public PageResponseDto<PaymentResponseDto> findPaymentListByMemberWithPage(final PageRequestDto pageRequestDto, final Member member) {
         List<PaymentResponseDto> content = getPaymentList(pageRequestDto, member);
-        long total = getTotalDataCount(pageRequestDto, member);
+        long total = getTotalDataCount(member);
 
         return new PageResponseDto<>(content, total);
     }
@@ -49,7 +49,7 @@ public class PaymentRepositoryCustom {
     /**
      * 관리자 페이징 조회 메서드
      */
-    private List<PaymentResponseDto> getPaymentList(PageRequestDto pageRequestDto) {
+    private List<PaymentResponseDto> getPaymentList(final PageRequestDto pageRequestDto) {
         return jpaQueryFactory
                 .select(Projections.constructor(PaymentResponseDto.class,
                         Expressions.stringTemplate("CAST({0} AS string)", payment.id),
@@ -59,7 +59,7 @@ public class PaymentRepositoryCustom {
                         payment.paymentMethod
                         ))
                 .from(payment)
-                .where(getWhereConditions(pageRequestDto))
+                .where(getWhereConditions())
                 .offset(pageRequestDto.getFirstIndex())
                 .limit(pageRequestDto.getSize())
                 .orderBy(getOrderConditions(pageRequestDto))
@@ -69,7 +69,7 @@ public class PaymentRepositoryCustom {
     /**
      * 사용자 페이징 조회 메서드
      */
-    private List<PaymentResponseDto> getPaymentList(PageRequestDto pageRequestDto, Member member) {
+    private List<PaymentResponseDto> getPaymentList(final PageRequestDto pageRequestDto, final Member member) {
         return jpaQueryFactory
                 .select(Projections.constructor(PaymentResponseDto.class,
                         Expressions.stringTemplate("CAST({0} AS string)", payment.id),
@@ -79,7 +79,7 @@ public class PaymentRepositoryCustom {
                         payment.paymentMethod
                 ))
                 .from(payment)
-                .where(getWhereConditions(pageRequestDto, member))
+                .where(getWhereConditions(member))
                 .offset(pageRequestDto.getFirstIndex())
                 .limit(pageRequestDto.getSize())
                 .orderBy(getOrderConditions(pageRequestDto))
@@ -89,11 +89,11 @@ public class PaymentRepositoryCustom {
     /**
      * 전체 데이터 수 조회
      */
-    private long getTotalDataCount(PageRequestDto pageRequestDto) {
+    private long getTotalDataCount() {
         return Optional.ofNullable(jpaQueryFactory
                         .select(payment.count())
                         .from(payment)
-                        .where(getWhereConditions(pageRequestDto))
+                        .where(getWhereConditions())
                         .fetchOne()
                 )
                 .orElse(0L);
@@ -102,11 +102,11 @@ public class PaymentRepositoryCustom {
     /**
      * 전체 데이터 수 조회 - member
      */
-    private long getTotalDataCount(PageRequestDto pageRequestDto, Member member) {
+    private long getTotalDataCount(final Member member) {
         return Optional.ofNullable(jpaQueryFactory
                         .select(payment.count())
                         .from(payment)
-                        .where(getWhereConditions(pageRequestDto, member))
+                        .where(getWhereConditions(member))
                         .fetchOne()
                 )
                 .orElse(0L);
@@ -116,7 +116,7 @@ public class PaymentRepositoryCustom {
      * 조회 조건
      */
     // wherecondition이 필요없는 경우나 pageRequestDto가 필요 없는 부분에 대한 의문
-    private BooleanBuilder getWhereConditions(PageRequestDto pageRequestDto) {
+    private BooleanBuilder getWhereConditions() {
         BooleanBuilder builder = new BooleanBuilder();
 
         return builder.and(payment.deletedAt.isNull());
@@ -126,7 +126,7 @@ public class PaymentRepositoryCustom {
     /**
      * 조회 조건 - member
      */
-    private BooleanBuilder getWhereConditions(PageRequestDto pageRequestDto, Member member) {
+    private BooleanBuilder getWhereConditions(final Member member) {
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(payment.member.id.eq(member.getId()));
         builder.and(payment.deletedAt.isNull());
@@ -143,7 +143,7 @@ public class PaymentRepositoryCustom {
         return switch (order) {
             case "latest" -> payment.createdAt.desc();
             case "earliest" -> payment.createdAt.asc();
-            default -> throw new CustomException(ShopErrorCode.ORDER_BY_NOT_FOUND);
+            default -> throw new CustomException(PaymentErrorCode.ORDER_BY_NOT_FOUND);
         };
     }
 }

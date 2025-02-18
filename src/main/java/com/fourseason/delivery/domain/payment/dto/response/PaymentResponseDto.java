@@ -1,4 +1,4 @@
-package com.fourseason.delivery.domain.payment.dto.responseDto;
+package com.fourseason.delivery.domain.payment.dto.response;
 
 import com.fourseason.delivery.domain.payment.entity.Payment;
 import lombok.Builder;

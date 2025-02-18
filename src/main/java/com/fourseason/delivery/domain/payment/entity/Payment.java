@@ -2,7 +2,7 @@ package com.fourseason.delivery.domain.payment.entity;
 
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.order.entity.Order;
-import com.fourseason.delivery.domain.payment.dto.requestDto.CreatePaymentRequestDto;
+import com.fourseason.delivery.domain.payment.dto.request.CreatePaymentRequestDto;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -44,7 +44,12 @@ public class Payment extends BaseTimeEntity {
     private Member member;
 
     @Builder
-    public Payment(String paymentKey, int paymentAmount, String paymentMethod, String paymentStatus, Order order, Member member) {
+    public Payment(final String paymentKey,
+                   final int paymentAmount,
+                   final String paymentMethod,
+                   final String paymentStatus,
+                   final Order order,
+                   final Member member) {
         this.paymentKey = paymentKey;
         this.paymentAmount = paymentAmount;
         this.paymentMethod = paymentMethod;
@@ -53,7 +58,7 @@ public class Payment extends BaseTimeEntity {
         this.member = member;
     }
 
-    public static Payment addOf(CreatePaymentRequestDto dto, String paymentStatus, Order order, Member member) {
+    public static Payment addOf(final CreatePaymentRequestDto dto, final String paymentStatus, final Order order, final Member member) {
         return Payment.builder()
                 .paymentKey(dto.paymentKey())
                 .paymentAmount(dto.paymentAmount())
@@ -67,11 +72,11 @@ public class Payment extends BaseTimeEntity {
     }
 
     //updateOf cancelOf 고민
-    public void cancelOf(String paymentStatus) {
+    public void cancelOf(final String paymentStatus) {
         this.paymentStatus = paymentStatus;
     }
 
-    public void deleteOf(String deletedBy) {
+    public void deleteOf(final String deletedBy) {
         super.deleteOf(deletedBy);
     }
 }

@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
+// pageRequestDto도 record로?
 public class PageRequestDto {
 
     private final int page;
