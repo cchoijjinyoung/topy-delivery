@@ -47,6 +47,8 @@ public class JwtCheckFilter extends OncePerRequestFilter {
 
             Claims claims = jwtUtil.validateToken(accessToken);
 
+            log.info(claims.toString());
+
             // 토큰 검증을 통해 가져온 claims 으로 Authentication 객체 생성
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(

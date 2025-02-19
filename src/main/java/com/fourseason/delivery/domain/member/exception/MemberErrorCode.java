@@ -21,11 +21,11 @@ public enum MemberErrorCode implements ErrorCode {
 
     @Override
     public HttpStatus httpStatus() {
-        return null;
+        return httpStatus;
     }
 
     @Override
     public String message() {
-        return "";
+        return message;
     }
 }

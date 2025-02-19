@@ -35,7 +35,6 @@ public class AuthService {
         Member member = memberRepository.findByUsername(request.username())
                 .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
         if (!passwordEncoder.matches(request.password(), member.getPassword())) {
-            log.warn("Login failed: Invalid password for username: {}", request.username());
             throw new CustomException(MEMBER_INVALID_CREDENTIAL);
         }
 
