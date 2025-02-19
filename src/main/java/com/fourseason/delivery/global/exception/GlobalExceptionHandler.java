@@ -2,6 +2,7 @@ package com.fourseason.delivery.global.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -38,8 +39,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<ErrorResponseEntity> handleNoHandlerFoundException(NoHandlerFoundException e) {
         return ResponseEntity.ok(ErrorResponseEntity.builder()
-                        .status(HttpStatus.NOT_FOUND.value())
-                        .message("Page not found")
+                .status(HttpStatus.NOT_FOUND.value())
+                .message("요청하신 페이지가 없습니다.")
+                .build());
+    }
+
+    /**
+     * Handle AccessDeniedHandler
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponseEntity> handleAccessDeniedException(AccessDeniedException e) {
+        return ResponseEntity.ok(ErrorResponseEntity.builder()
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .message("권한이 없습니다.")
                 .build());
     }
 }
