@@ -18,3 +18,8 @@ server:
       charset: UTF-8
       enabled: true
       force: true
+jwt:
+  issuer: "s1jin-delivery"
+  access-expiration: 30 # Access Token: min
+  refresh-expiration: 7 # Refresh Token: day
+  secret: ${JWT_SECRET}
