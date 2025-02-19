@@ -6,7 +6,6 @@ import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.group.GroupBy;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -59,22 +58,21 @@ public class MenuRepositoryCustom {
      */
     private List<MenuResponseDto> getMenuList(UUID shopId, PageRequestDto pageRequestDto) {
         return jpaQueryFactory
-                .selectFrom(menu)
-                .leftJoin(menuImage).on(menu.id.eq(menuImage.menu.id))
-                .where(getWhereConditions(shopId))
-                .offset(pageRequestDto.getFirstIndex())
-                .limit(pageRequestDto.getSize())
-                .orderBy(getOrderConditions(pageRequestDto))
-                .transform(groupBy(menu.id).list(
-                    Projections.constructor(MenuResponseDto.class,
-                        Expressions.stringTemplate("CAST({0} AS string)", menu.id),
-                        menu.name,
-                        menu.description,
-                        menu.price,
-                        GroupBy.list(
-                            Expressions.stringTemplate("CASE WHEN {0} IS NOT NULL THEN {0} ELSE '' END", menuImage.imageUrl)
-                        )
-                )));
+            .from(menu)
+            .leftJoin(menuImage).on(menu.id.eq(menuImage.menu.id))
+            .where(getWhereConditions(shopId))
+            .offset(pageRequestDto.getFirstIndex())
+            .limit(pageRequestDto.getSize())
+            .orderBy(getOrderConditions(pageRequestDto))
+            .transform(groupBy(menu.id).list(
+                Projections.constructor(MenuResponseDto.class,
+                    Expressions.stringTemplate("CAST({0} AS string)", menu.id),
+                    menu.name,
+                    menu.description,
+                    menu.price,
+                    list(menuImage.imageUrl)
+                )
+            ));
     }
 
     /**
@@ -82,20 +80,21 @@ public class MenuRepositoryCustom {
      */
     public List<MenuResponseDto> getMenuList(UUID shopId, PageRequestDto pageRequestDto, String keyword) {
         return jpaQueryFactory
-            .select(Projections.constructor(MenuResponseDto.class,
-                Expressions.stringTemplate("CAST({0} AS string)", menu.id),
-                menu.name,
-                menu.description,
-                menu.price,
-                GroupBy.list(menuImage.imageUrl)
-            ))
             .from(menu)
             .leftJoin(menuImage).on(menu.id.eq(menuImage.menu.id))
             .where(getWhereConditions(shopId, keyword))
             .offset(pageRequestDto.getFirstIndex())
             .limit(pageRequestDto.getSize())
             .orderBy(getOrderConditions(pageRequestDto))
-            .fetch();
+            .transform(groupBy(menu.id).list(
+                Projections.constructor(MenuResponseDto.class,
+                    Expressions.stringTemplate("CAST({0} AS string)", menu.id),
+                    menu.name,
+                    menu.description,
+                    menu.price,
+                    list(menuImage.imageUrl)
+                )
+            ));
     }
 
     /**
