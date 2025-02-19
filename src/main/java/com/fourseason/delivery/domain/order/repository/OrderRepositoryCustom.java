@@ -3,8 +3,8 @@ package com.fourseason.delivery.domain.order.repository;
 import static com.fourseason.delivery.domain.order.entity.QOrder.order;
 
 import com.fourseason.delivery.domain.menu.exception.MenuErrorCode;
-import com.fourseason.delivery.domain.order.dto.response.OrderResponseDto;
-import com.fourseason.delivery.domain.order.dto.response.QOrderResponseDto;
+import com.fourseason.delivery.domain.order.dto.response.OrderSummaryResponseDto;
+import com.fourseason.delivery.domain.order.dto.response.QOrderSummaryResponseDto;
 import com.fourseason.delivery.domain.order.entity.QOrder;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
@@ -27,9 +27,9 @@ public class OrderRepositoryCustom {
   /**
    * 주문 목록 조회
    */
-  public PageResponseDto<OrderResponseDto> findOrderListWithPage(Long memberId,
+  public PageResponseDto<OrderSummaryResponseDto> findOrderListWithPage(Long memberId,
       PageRequestDto pageRequestDto) {
-    List<OrderResponseDto> content = getOrderList(memberId, pageRequestDto);
+    List<OrderSummaryResponseDto> content = getOrderList(memberId, pageRequestDto);
     long total = getTotalDataCount(memberId);
 
     return new PageResponseDto<>(content, total);
@@ -38,9 +38,9 @@ public class OrderRepositoryCustom {
   /**
    * 페이징 결과 조회 메서드
    */
-  private List<OrderResponseDto> getOrderList(Long memberId, PageRequestDto pageRequestDto) {
-    JPAQuery<OrderResponseDto> query = jpaQueryFactory
-        .select(new QOrderResponseDto(order))
+  private List<OrderSummaryResponseDto> getOrderList(Long memberId, PageRequestDto pageRequestDto) {
+    JPAQuery<OrderSummaryResponseDto> query = jpaQueryFactory
+        .select(new QOrderSummaryResponseDto(order))
         .from(order)
         .where(getWhereConditions(memberId))
         .offset(pageRequestDto.getFirstIndex())

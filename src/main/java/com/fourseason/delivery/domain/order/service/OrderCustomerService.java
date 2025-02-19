@@ -10,9 +10,10 @@ import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.menu.entity.Menu;
 import com.fourseason.delivery.domain.menu.repository.MenuRepository;
-import com.fourseason.delivery.domain.order.dto.response.OrderResponseDto;
+import com.fourseason.delivery.domain.order.dto.response.OrderDetailResponseDto;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto.MenuDto;
+import com.fourseason.delivery.domain.order.dto.response.OrderSummaryResponseDto;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderMenu;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
@@ -79,17 +80,17 @@ public class OrderCustomerService {
   }
 
   @Transactional(readOnly = true)
-  public OrderResponseDto getOrder(UUID orderId, Long memberId) {
+  public OrderDetailResponseDto getOrder(UUID orderId, Long memberId) {
     Order order = orderRepository.findById(orderId)
         .orElseThrow(() -> new CustomException(ORDER_NOT_FOUND));
 
     order.assertOrderedBy(memberId);
 
-    return OrderResponseDto.of(order);
+    return OrderDetailResponseDto.of(order);
   }
 
   @Transactional(readOnly = true)
-  public PageResponseDto<OrderResponseDto> getOrderList(
+  public PageResponseDto<OrderSummaryResponseDto> getOrderList(
       Long memberId,
       PageRequestDto pageRequestDto
   ) {

@@ -7,7 +7,6 @@ import static com.fourseason.delivery.domain.order.entity.OrderType.ONLINE;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.MEMBER_NOT_FOUND;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ORDER_NOT_FOUND;
 import static com.fourseason.delivery.domain.shop.exception.ShopErrorCode.SHOP_NOT_FOUND;
-import static com.fourseason.delivery.fixture.MemberFixture.*;
 import static com.fourseason.delivery.fixture.MemberFixture.createMember;
 import static com.fourseason.delivery.fixture.OrderFixture.createOrder;
 import static com.fourseason.delivery.fixture.OrderMenuFixture.createOrderMenuList;
@@ -20,15 +19,14 @@ import static org.mockito.Mockito.when;
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.menu.repository.MenuRepository;
-import com.fourseason.delivery.domain.order.dto.response.OrderResponseDto;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto.MenuDto;
+import com.fourseason.delivery.domain.order.dto.response.OrderDetailResponseDto;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderMenu;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.domain.shop.repository.ShopRepository;
-import com.fourseason.delivery.fixture.MemberFixture;
 import com.fourseason.delivery.global.exception.CustomException;
 import java.util.ArrayList;
 import java.util.List;
@@ -203,7 +201,8 @@ class OrderCustomerServiceTest {
       when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
 
       // when
-      OrderResponseDto response = orderCustomerService.getOrder(order.getId(), loginMember.getId());
+      OrderDetailResponseDto response = orderCustomerService.getOrder(order.getId(),
+          loginMember.getId());
 
       // then
       assertThat(response.shopName()).isEqualTo(order.getShop().getName());

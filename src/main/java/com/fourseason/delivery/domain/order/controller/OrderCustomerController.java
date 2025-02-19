@@ -1,7 +1,8 @@
 package com.fourseason.delivery.domain.order.controller;
 
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
-import com.fourseason.delivery.domain.order.dto.response.OrderResponseDto;
+import com.fourseason.delivery.domain.order.dto.response.OrderDetailResponseDto;
+import com.fourseason.delivery.domain.order.dto.response.OrderSummaryResponseDto;
 import com.fourseason.delivery.domain.order.service.OrderCustomerService;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
@@ -44,7 +45,7 @@ public class OrderCustomerController {
    * 고객의 주문 상세 조회 API role: CUSTOMER
    */
   @GetMapping("/{orderId}")
-  public ResponseEntity<OrderResponseDto> getOrder(
+  public ResponseEntity<OrderDetailResponseDto> getOrder(
       @PathVariable UUID orderId,
       @RequestParam Long memberId
   ) {
@@ -55,7 +56,7 @@ public class OrderCustomerController {
    * 고객 주문 목록 조회 API role: CUSTOMER
    */
   @GetMapping
-  public ResponseEntity<PageResponseDto<OrderResponseDto>> getOrderList(
+  public ResponseEntity<PageResponseDto<OrderSummaryResponseDto>> getOrderList(
       @RequestParam Long memberId,
       @RequestParam(defaultValue = "1") int page,
       @RequestParam(defaultValue = "10") int size,

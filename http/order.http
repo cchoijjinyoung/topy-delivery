@@ -17,6 +17,9 @@ Content-Type: application/json
   ]
 }
 
+### 고객 주문 상세 조회
+GET http://localhost:8080/api/customer/orders/adb6b9a4-77e5-4e77-a22f-61cd0f7a7f39?memberId=5
+
 ### 고객 주문 리스트 조회
 GET http://localhost:8080/api/customer/orders?memberId=5&page=1&size=20&orderBy=latest
 Content-Type: application/json
