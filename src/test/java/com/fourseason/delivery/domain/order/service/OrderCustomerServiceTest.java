@@ -7,6 +7,7 @@ import static com.fourseason.delivery.domain.order.entity.OrderType.ONLINE;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.MEMBER_NOT_FOUND;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ORDER_NOT_FOUND;
 import static com.fourseason.delivery.domain.shop.exception.ShopErrorCode.SHOP_NOT_FOUND;
+import static com.fourseason.delivery.fixture.MemberFixture.*;
 import static com.fourseason.delivery.fixture.MemberFixture.createMember;
 import static com.fourseason.delivery.fixture.OrderFixture.createOrder;
 import static com.fourseason.delivery.fixture.OrderMenuFixture.createOrderMenuList;
@@ -27,6 +28,7 @@ import com.fourseason.delivery.domain.order.entity.OrderMenu;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.domain.shop.repository.ShopRepository;
+import com.fourseason.delivery.fixture.MemberFixture;
 import com.fourseason.delivery.global.exception.CustomException;
 import java.util.ArrayList;
 import java.util.List;
@@ -143,41 +145,65 @@ class OrderCustomerServiceTest {
   @Nested
   class getOrder {
 
-    UUID orderId = UUID.randomUUID();
-
     @Test
     @DisplayName("고객 단건 주문 조회 시, 존재하지 않는 주문이면 예외가 발생한다.")
     void order_not_found() {
       // given
+      Member loginMember = createMember(CUSTOMER);
+      UUID orderId = UUID.randomUUID();
       when(orderRepository.findById(orderId)).thenThrow(new CustomException(ORDER_NOT_FOUND));
 
       // when
       // then
-      assertThatThrownBy(() -> orderCustomerService.getOrder(orderId))
+      assertThatThrownBy(() -> orderCustomerService.getOrder(orderId, loginMember.getId()))
           .isInstanceOf(CustomException.class)
           .hasMessage("해당 주문을 찾을 수 없습니다.");
     }
 
     @Test
-    @DisplayName("고객 단건 주문 조회 성공")
-    void success() {
+    @DisplayName("고객 단건 주문 조회 시, 해당 주문을 요청한 고객이 아니면 예외가 발생한다.")
+    void not_ordered_by_customer() {
       // given
-      Member member = createMember(CUSTOMER);
+      Member loginMember = createMember(CUSTOMER);
+
       Member owner = createMember(OWNER);
       Shop shop = createShop(owner);
-
       List<OrderMenu> orderMenuList = createOrderMenuList(
           createOrderMenuWithQuantity("치킨", 5000, 1),
           createOrderMenuWithQuantity("피자", 10000, 2),
           createOrderMenuWithQuantity("족발", 20000, 3)
       );
 
-      Order order = createOrder(member, shop, PENDING, ONLINE, orderMenuList);
-
-      when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+      Member another = createMember(CUSTOMER);
+      Order order = createOrder(another, shop, PENDING, ONLINE, orderMenuList);
+      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
 
       // when
-      OrderResponseDto response = orderCustomerService.getOrder(orderId);
+      // then
+      assertThatThrownBy(() -> orderCustomerService.getOrder(order.getId(), loginMember.getId()))
+          .isInstanceOf(CustomException.class)
+          .hasMessage("해당 주문을 요청한 고객이 아닙니다.");
+    }
+
+    @Test
+    @DisplayName("고객 단건 주문 조회 성공")
+    void success() {
+      // given
+      Member loginMember = createMember(CUSTOMER);
+
+      Member owner = createMember(OWNER);
+      Shop shop = createShop(owner);
+      List<OrderMenu> orderMenuList = createOrderMenuList(
+          createOrderMenuWithQuantity("치킨", 5000, 1),
+          createOrderMenuWithQuantity("피자", 10000, 2),
+          createOrderMenuWithQuantity("족발", 20000, 3)
+      );
+
+      Order order = createOrder(loginMember, shop, PENDING, ONLINE, orderMenuList);
+      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+
+      // when
+      OrderResponseDto response = orderCustomerService.getOrder(order.getId(), loginMember.getId());
 
       // then
       assertThat(response.shopName()).isEqualTo(order.getShop().getName());
