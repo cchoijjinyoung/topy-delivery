@@ -39,9 +39,9 @@ public class ReviewService {
 
 
     @Transactional
-    public void createReview(String orderId, ReviewRequestDto reviewRequestDto) {
+    public void createReview(UUID orderId, ReviewRequestDto reviewRequestDto) {
         // 1) Order 조회
-        Order order = orderRepository.findById(UUID.fromString(orderId))
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException(ReviewErrorCode.ORDER_NOT_FOUND));
 
         // 2) 주문상태 확인
@@ -64,21 +64,21 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public ReviewResponseDto getReview(String orderId, String reviewId) {
+    public ReviewResponseDto getReview(UUID orderId, UUID reviewId) {
         // 1) 리뷰 조회
-        Review review = reviewRepository.findByIdAndOrderIdAndDeletedAtIsNull(UUID.fromString(reviewId), UUID.fromString(orderId))
+        Review review = reviewRepository.findByIdAndOrderIdAndDeletedAtIsNull(reviewId, orderId)
                 .orElseThrow(() -> new CustomException(ReviewErrorCode.REVIEW_NOT_FOUND));
 
         // 2) 리뷰 이미지 리스트 조회
-        List<ReviewImage> reviewImages = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(UUID.fromString(reviewId));
+        List<ReviewImage> reviewImages = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(reviewId);
 
         return ReviewResponseDto.of(review, reviewImages);
     }
 
     @Transactional
-    public ReviewResponseDto updateReview(String orderId, String reviewId, ReviewRequestDto reviewRequestDto) {
+    public ReviewResponseDto updateReview(UUID orderId, UUID reviewId, ReviewRequestDto reviewRequestDto) {
         // 1) 리뷰 조회 및 리뷰 내용, 평점 업데이트
-        Review review = reviewRepository.findByIdAndOrderIdAndDeletedAtIsNull(UUID.fromString(reviewId), UUID.fromString(orderId))
+        Review review = reviewRepository.findByIdAndOrderIdAndDeletedAtIsNull(reviewId, orderId)
                 .orElseThrow(() -> new CustomException(ReviewErrorCode.REVIEW_NOT_FOUND));
 
         review.updateOf(reviewRequestDto);
@@ -88,7 +88,7 @@ public class ReviewService {
 
 
         // 2) 새로운 이미지가 있을 경우 기존 이미지 삭제
-        List<ReviewImage> existingImages = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(UUID.fromString(reviewId));
+        List<ReviewImage> existingImages = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(reviewId);
         if(!existingImages.isEmpty()) {
             for(ReviewImage image : existingImages) {
                 image.deleteOf(member.getUsername());
@@ -110,14 +110,14 @@ public class ReviewService {
     }
 
     @Transactional
-    public void deleteReview(String orderId, String reviewId) {
-        Review review = reviewRepository.findByIdAndOrderIdAndDeletedAtIsNull(UUID.fromString(reviewId), UUID.fromString(orderId))
+    public void deleteReview(UUID orderId, UUID reviewId) {
+        Review review = reviewRepository.findByIdAndOrderIdAndDeletedAtIsNull(reviewId, orderId)
                 .orElseThrow(() -> new CustomException(ReviewErrorCode.REVIEW_NOT_FOUND));
 
         // TODO: 현재 임시 유저를 넣었음. 이후 수정 필요.
         Member member = new Member("유저", "user@example.com", "1234", "010-0000-0000", Role.CUSTOMER);
 
-        List<ReviewImage> existingImages = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(UUID.fromString(reviewId));
+        List<ReviewImage> existingImages = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(reviewId);
         if(!existingImages.isEmpty()) {
             for(ReviewImage image : existingImages) {
                 image.deleteOf(member.getUsername());
@@ -128,12 +128,12 @@ public class ReviewService {
     }
 
 
-    public List<ReviewResponseDto> getReviewList(String shopId) {
-        Shop shop = shopRepository.findById(UUID.fromString(shopId))
+    public List<ReviewResponseDto> getReviewList(UUID shopId) {
+        Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new CustomException(ReviewErrorCode.SHOP_NOT_FOUND));
 
         List<Review> reviews = reviewRepository.findByShop(shop);
-        List<ReviewImage> images = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(UUID.fromString(shopId));
+        List<ReviewImage> images = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(shopId);
 
         // 각 리뷰마다 해당하는 이미지 찾아서 ReviewResponseDto에 넣기
         List<ReviewResponseDto> responseList = new ArrayList<>();
