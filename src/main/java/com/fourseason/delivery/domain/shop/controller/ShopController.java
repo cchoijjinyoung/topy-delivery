@@ -11,7 +11,9 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @RequestMapping("/api/shops")
@@ -44,8 +46,9 @@ public class ShopController {
      * 가게 등록 API
      */
     @PostMapping
-    public ResponseEntity<Void> registerShop(@RequestBody @Valid CreateShopRequestDto createShopRequestDto) {
-        shopService.registerShop(createShopRequestDto);
+    public ResponseEntity<Void> registerShop(@RequestPart @Valid CreateShopRequestDto createShopRequestDto,
+                                             @RequestPart List<MultipartFile> images) {
+        shopService.registerShop(createShopRequestDto, images);
         return ResponseEntity.ok().build();
     }
 

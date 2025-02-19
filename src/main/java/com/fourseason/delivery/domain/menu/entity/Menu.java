@@ -42,7 +42,7 @@ public class Menu extends BaseTimeEntity {
     private Shop shop;
 
     @Builder
-    public Menu(String name, String description, int price, MenuStatus menuStatus, Shop shop) {
+    private Menu(String name, String description, int price, MenuStatus menuStatus, Shop shop) {
         this.name = name;
         this.description = description;
         this.price = price;
