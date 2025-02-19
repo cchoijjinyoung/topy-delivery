@@ -132,7 +132,7 @@ public class ReviewService {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new CustomException(ReviewErrorCode.SHOP_NOT_FOUND));
 
-        List<Review> reviews = reviewRepository.findByShop(shop);
+        List<Review> reviews = reviewRepository.findByShopAndDeletedAtIsNull(shop);
         List<ReviewImage> images = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(shopId);
 
         // 각 리뷰마다 해당하는 이미지 찾아서 ReviewResponseDto에 넣기
