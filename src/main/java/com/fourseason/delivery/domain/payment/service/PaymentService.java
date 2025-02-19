@@ -2,14 +2,12 @@ package com.fourseason.delivery.domain.payment.service;
 
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.order.entity.Order;
-import com.fourseason.delivery.domain.order.entity.OrderStatus;
 import com.fourseason.delivery.domain.payment.dto.request.CreatePaymentRequestDto;
 import com.fourseason.delivery.domain.payment.dto.response.PaymentResponseDto;
 import com.fourseason.delivery.domain.payment.entity.Payment;
 import com.fourseason.delivery.domain.payment.exception.PaymentErrorCode;
 import com.fourseason.delivery.domain.payment.repository.PaymentRepository;
 import com.fourseason.delivery.domain.payment.repository.PaymentRepositoryCustom;
-import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
@@ -52,7 +50,7 @@ public class PaymentService {
     @Transactional
     public URI registerPayment(final CreatePaymentRequestDto createPaymentRequestDto, final Member member) {
         // Todo: 임시 order 객체 생성 실제로는 order객체 조회, 확인 필요
-        Order order = new Order(OrderStatus.PENDING, "test", 1, Shop.builder().build(), member);
+        Order order = Order.builder().build();
         // Todo: pb사에 결제 승인처리, 결제 성공확인, 받은 객체에서 status 값 적용, 현재는 임시로 "DONE" 사용
         Payment newPayment = Payment.addOf(createPaymentRequestDto, "DONE", order, member);
         paymentRepository.save(newPayment);
@@ -107,6 +105,10 @@ public class PaymentService {
 
         return PaymentResponseDto.of(payment);
     }
+
+    /**
+     * 승인처리관련
+     */
 
     /**
      * 에러처리
