@@ -38,4 +38,9 @@ public abstract class BaseTimeEntity {
 
     @Column(name = "deleted_by")
     private String deletedBy;
+
+    public void deleteOf(String deletedBy) {
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
 }
