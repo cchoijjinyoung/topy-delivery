@@ -53,7 +53,7 @@ public class OrderCustomerService {
         .orElseThrow(() -> new CustomException(SHOP_NOT_FOUND));
 
     List<UUID> requestMenuIds = request.menuList().stream().map(MenuDto::menuId).toList();
-    List<Menu> menuList = menuRepository.findByIdIn(requestMenuIds);
+    List<Menu> menuList = menuRepository.findByIdInAndDeletedAtIsNull(requestMenuIds);
 
     if (requestMenuIds.size() != menuList.size()) {
       throw new CustomException(MENU_NOT_FOUND);

@@ -129,7 +129,7 @@ class OrderCustomerServiceTest {
       when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
       when(shopRepository.findById(request.shopId())).thenReturn(
           Optional.of(shop));
-      when(menuRepository.findByIdIn(List.of(request.menuList().get(0).menuId())))
+      when(menuRepository.findByIdInAndDeletedAtIsNull(List.of(request.menuList().get(0).menuId())))
           .thenReturn(List.of());
 
       // when
