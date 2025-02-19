@@ -41,19 +41,19 @@ class OrderOwnerServiceTest {
   @Nested
   class acceptOrder {
 
-    Long ownerId = 1L;
-
     UUID orderId = UUID.randomUUID();
 
     @Test
     @DisplayName("주문 수락 시 존재하지 않은 주문이면 예외가 발생한다.")
     void order_not_found() {
       // given
+      Member loginMember = MemberFixture.createMember(OWNER);
+
       when(orderRepository.findById(orderId)).thenThrow(new CustomException(ORDER_NOT_FOUND));
 
       // when  
       // then      
-      assertThatThrownBy(() -> orderOwnerService.acceptOrder(ownerId, orderId))
+      assertThatThrownBy(() -> orderOwnerService.acceptOrder(loginMember.getId(), orderId))
           .isInstanceOf(CustomException.class)
           .hasMessage("해당 주문을 찾을 수 없습니다.");
     }
@@ -61,21 +61,20 @@ class OrderOwnerServiceTest {
     @Test
     @DisplayName("주문 수락 시 해당 가게의 주문이 아니면 예외가 발생한다.")
     void not_shop_order() {
-
       // given
-      Member another = MemberFixture.createMember(OWNER);
+      Member loginMember = MemberFixture.createMember(OWNER);
 
-      Shop anotherShop = ShopFixture.createShop(another);
+      Member anotherOwner = MemberFixture.createMember(OWNER);
+      Shop anotherOwnerShop = ShopFixture.createShop(anotherOwner);
 
-      Member orderMember = MemberFixture.createMember(CUSTOMER);
       Order anotherOrder = OrderFixture.createOrder(
-          orderMember, anotherShop, PENDING, ONLINE, List.of());
+          MemberFixture.createMember(CUSTOMER), anotherOwnerShop, PENDING, ONLINE, List.of());
 
       when(orderRepository.findById(orderId)).thenReturn(Optional.of(anotherOrder));
 
       // when
       // then
-      assertThatThrownBy(() -> orderOwnerService.acceptOrder(ownerId, orderId))
+      assertThatThrownBy(() -> orderOwnerService.acceptOrder(loginMember.getId(), orderId))
           .isInstanceOf(CustomException.class)
           .hasMessage("가게 주인이 아닙니다.");
     }
@@ -84,15 +83,15 @@ class OrderOwnerServiceTest {
     @DisplayName("주문 수락 성공")
     void success() {
       // given
-      Member owner = MemberFixture.createMember(OWNER);
-      Shop shop = ShopFixture.createShop(owner);
-      Member customer = MemberFixture.createMember(CUSTOMER);
-      Order order = OrderFixture.createOrder(customer, shop, PENDING, ONLINE, List.of());
+      Member loginMember = MemberFixture.createMember(OWNER);
+      Shop shop = ShopFixture.createShop(loginMember);
+      Order order = OrderFixture.createOrder(
+          MemberFixture.createMember(CUSTOMER), shop, PENDING, ONLINE, List.of());
 
       when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
       // when
-      orderOwnerService.acceptOrder(ownerId, orderId);
+      orderOwnerService.acceptOrder(loginMember.getId(), orderId);
 
       // then
       assertThat(order.getOrderStatus()).isEqualTo(ACCEPTED);
