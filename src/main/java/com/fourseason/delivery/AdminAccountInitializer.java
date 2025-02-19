@@ -16,7 +16,7 @@ public class AdminAccountInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         if (memberRepository.findByUsername("admin").isEmpty()) {
             Member admin = new Member(
                     "admin",
