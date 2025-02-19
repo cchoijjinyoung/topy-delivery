@@ -1,5 +1,6 @@
 package com.fourseason.delivery.domain.member.entity;
 
+import com.fourseason.delivery.global.auth.dto.SignUpRequestDto;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -39,5 +40,15 @@ public class Member extends BaseTimeEntity {
         this.password = password;
         this.phoneNumber = phoneNumber;
         this.role = role;
+    }
+
+    public static Member addOf(SignUpRequestDto request, String password) {
+        return Member.builder()
+                .username(request.username())
+                .email(request.email())
+                .password(password)
+                .phoneNumber(request.phoneNumber())
+                .role(Role.CUSTOMER)
+                .build();
     }
 }
