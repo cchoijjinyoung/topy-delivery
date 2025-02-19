@@ -2,6 +2,7 @@ package com.fourseason.delivery.domain.order.service;
 
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.MEMBER_NOT_FOUND;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.MENU_NOT_FOUND;
+import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ORDER_NOT_FOUND;
 import static com.fourseason.delivery.domain.shop.exception.ShopErrorCode.SHOP_NOT_FOUND;
 import static java.util.stream.Collectors.toMap;
 
@@ -9,13 +10,17 @@ import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.menu.entity.Menu;
 import com.fourseason.delivery.domain.menu.repository.MenuRepository;
+import com.fourseason.delivery.domain.order.dto.response.OrderResponseDto;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto.MenuDto;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderMenu;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
+import com.fourseason.delivery.domain.order.repository.OrderRepositoryCustom;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.domain.shop.repository.ShopRepository;
+import com.fourseason.delivery.global.dto.PageRequestDto;
+import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +38,7 @@ public class OrderCustomerService {
   private final ShopRepository shopRepository;
   private final MemberRepository memberRepository;
   private final MenuRepository menuRepository;
+  private final OrderRepositoryCustom orderRepositoryCustom;
 
   /**
    * 리팩토링 과제
@@ -60,16 +66,31 @@ public class OrderCustomerService {
     List<OrderMenu> orderMenuList = new ArrayList<>();
 
     for (Menu menu : menuList) {
-      OrderMenu orderMenu = OrderMenu.addOf(menu, menu.getPrice(),
-          menuDtoMap.get(menu.getId()).quantity());
+      OrderMenu orderMenu = OrderMenu.addOf(menu, menuDtoMap.get(menu.getId()).quantity());
 
-      totalPrice += menu.getPrice();
+      totalPrice += orderMenu.getPrice();
       orderMenuList.add(orderMenu);
     }
 
     Order savedOrder = orderRepository.save(
-        Order.addOf(request, shop, member, orderMenuList, totalPrice));
+        Order.addByOnlineOrder(request, shop, member, orderMenuList, totalPrice));
 
     return savedOrder.getId();
+  }
+
+  @Transactional(readOnly = true)
+  public OrderResponseDto getOrder(UUID orderId) {
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new CustomException(ORDER_NOT_FOUND));
+
+    return OrderResponseDto.of(order);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponseDto<OrderResponseDto> getOrderList(
+      Long memberId,
+      PageRequestDto pageRequestDto
+  ) {
+    return orderRepositoryCustom.findOrderListWithPage(memberId, pageRequestDto);
   }
 }
