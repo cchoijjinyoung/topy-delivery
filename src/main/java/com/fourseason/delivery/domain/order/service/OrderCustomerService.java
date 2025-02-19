@@ -68,7 +68,7 @@ public class OrderCustomerService {
     for (Menu menu : menuList) {
       OrderMenu orderMenu = OrderMenu.addOf(menu, menuDtoMap.get(menu.getId()).quantity());
 
-      totalPrice += orderMenu.getPrice();
+      totalPrice += orderMenu.getPrice() * orderMenu.getQuantity();
       orderMenuList.add(orderMenu);
     }
 
