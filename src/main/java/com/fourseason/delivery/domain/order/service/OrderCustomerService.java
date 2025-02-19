@@ -79,9 +79,11 @@ public class OrderCustomerService {
   }
 
   @Transactional(readOnly = true)
-  public OrderResponseDto getOrder(UUID orderId) {
+  public OrderResponseDto getOrder(UUID orderId, Long memberId) {
     Order order = orderRepository.findById(orderId)
         .orElseThrow(() -> new CustomException(ORDER_NOT_FOUND));
+
+    order.assertOrderedBy(memberId);
 
     return OrderResponseDto.of(order);
   }

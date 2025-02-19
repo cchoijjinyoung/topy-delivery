@@ -44,8 +44,11 @@ public class OrderCustomerController {
    * 고객의 주문 상세 조회 API role: CUSTOMER
    */
   @GetMapping("/{orderId}")
-  public ResponseEntity<OrderResponseDto> getOrder(@PathVariable UUID orderId) {
-    return ResponseEntity.ok(orderCustomerService.getOrder(orderId));
+  public ResponseEntity<OrderResponseDto> getOrder(
+      @PathVariable UUID orderId,
+      @RequestParam Long memberId
+  ) {
+    return ResponseEntity.ok(orderCustomerService.getOrder(orderId, memberId));
   }
 
   /**

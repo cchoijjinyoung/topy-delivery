@@ -2,6 +2,7 @@ package com.fourseason.delivery.domain.order.entity;
 
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.*;
 import static com.fourseason.delivery.domain.order.entity.OrderType.*;
+import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.*;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_PENDING_ORDER;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_SHOP_OWNER;
 import static jakarta.persistence.CascadeType.PERSIST;
@@ -9,6 +10,7 @@ import static jakarta.persistence.FetchType.LAZY;
 
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
+import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
 import com.fourseason.delivery.global.exception.CustomException;
@@ -114,6 +116,12 @@ public class Order extends BaseTimeEntity {
   public void assertOrderIsPending() {
     if (this.orderStatus != OrderStatus.PENDING) {
       throw new CustomException(NOT_PENDING_ORDER);
+    }
+  }
+
+  public void assertOrderedBy(Long customerId) {
+    if (!this.getMember().getId().equals(customerId)) {
+      throw new CustomException(NOT_ORDERED_BY_CUSTOMER);
     }
   }
 }
