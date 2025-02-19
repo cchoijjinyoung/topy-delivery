@@ -1,13 +1,23 @@
 package com.fourseason.delivery.domain.order.entity;
 
-import static jakarta.persistence.CascadeType.*;
-import static jakarta.persistence.FetchType.*;
+import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_SHOP_OWNER;
+import static jakarta.persistence.CascadeType.PERSIST;
+import static jakarta.persistence.FetchType.LAZY;
 
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
-import jakarta.persistence.*;
+import com.fourseason.delivery.global.exception.CustomException;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -25,59 +35,69 @@ import org.hibernate.annotations.UuidGenerator;
 @AllArgsConstructor
 public class Order extends BaseTimeEntity {
 
-    @Id
-    @UuidGenerator
-    private UUID id;
+  @Id
+  @UuidGenerator
+  private UUID id;
 
-    @ManyToOne
-    @JoinColumn(name = "shop_id")
-    private Shop shop;
+  @ManyToOne
+  @JoinColumn(name = "shop_id")
+  private Shop shop;
 
-    @ManyToOne
-    @JoinColumn(name = "member_id")
-    private Member member;
+  @ManyToOne
+  @JoinColumn(name = "member_id")
+  private Member member;
 
-    @OneToMany(fetch = LAZY, cascade = PERSIST)
-    private List<OrderMenu> orderMenuList;
+  @OneToMany(fetch = LAZY, cascade = PERSIST)
+  private List<OrderMenu> orderMenuList;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private OrderStatus orderStatus;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private OrderStatus orderStatus;
 
-    @Column(nullable = false)
-    private String address;
+  @Column(nullable = false)
+  private String address;
 
-    private String instruction;
+  private String instruction;
 
-    @Column(nullable = false)
-    private int totalPrice;
+  @Column(nullable = false)
+  private int totalPrice;
 
-    @Builder
-    private Order(Shop shop, Member member, List<OrderMenu> orderMenuList,
-        OrderStatus orderStatus, String address, String instruction, int totalPrice) {
-        this.shop = shop;
-        this.member = member;
-        this.orderMenuList = orderMenuList;
-        this.orderStatus = orderStatus;
-        this.address = address;
-        this.instruction = instruction;
-        this.totalPrice = totalPrice;
+  @Builder
+  private Order(Shop shop, Member member, List<OrderMenu> orderMenuList,
+      OrderStatus orderStatus, String address, String instruction, int totalPrice) {
+    this.shop = shop;
+    this.member = member;
+    this.orderMenuList = orderMenuList;
+    this.orderStatus = orderStatus;
+    this.address = address;
+    this.instruction = instruction;
+    this.totalPrice = totalPrice;
+  }
+
+  public static Order addOf(
+      CreateOrderRequestDto dto,
+      Shop shop,
+      Member member,
+      List<OrderMenu> orderMenuList,
+      int totalPrice) {
+    return Order.builder()
+        .shop(shop)
+        .member(member)
+        .orderStatus(OrderStatus.PENDING)
+        .address(dto.address())
+        .instruction(dto.instruction())
+        .totalPrice(totalPrice)
+        .orderMenuList(orderMenuList)
+        .build();
+  }
+
+  public void updateStatus(OrderStatus orderStatus) {
+    this.orderStatus = orderStatus;
+  }
+
+  public void validateShopOwner(Long ownerId) {
+    if (!this.getShop().getMember().getId().equals(ownerId)) {
+      throw new CustomException(NOT_SHOP_OWNER);
     }
-
-    public static Order addOf(
-        CreateOrderRequestDto dto,
-        Shop shop,
-        Member member,
-        List<OrderMenu> orderMenuList,
-        int totalPrice) {
-        return Order.builder()
-            .shop(shop)
-            .member(member)
-            .orderStatus(OrderStatus.PENDING)
-            .address(dto.address())
-            .instruction(dto.instruction())
-            .totalPrice(totalPrice)
-            .orderMenuList(orderMenuList)
-            .build();
-    }
+  }
 }
