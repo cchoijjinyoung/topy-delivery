@@ -22,7 +22,7 @@ public class ShopReviewController {
      * 특정 가게 리뷰 리스트 조회
      */
     @GetMapping("/api/shops/{shop_id}/reviews")
-    public ResponseEntity<List<ReviewResponseDto>> getReviewList(@PathVariable String shop_id) {
-        return ResponseEntity.ok(reviewService.getReviewList(shop_id));
+    public ResponseEntity<List<ReviewResponseDto>> getReviewList(@PathVariable String shopId) {
+        return ResponseEntity.ok(reviewService.getReviewList(shopId));
     }
 }

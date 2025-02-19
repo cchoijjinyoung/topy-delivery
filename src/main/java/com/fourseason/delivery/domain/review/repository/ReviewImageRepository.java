@@ -8,5 +8,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ReviewImageRepository extends JpaRepository<ReviewImage, UUID> {
-    List<ReviewImage> findByReviewId(UUID review_id);
+    List<ReviewImage> findByReviewId(UUID reviewId);
 }
