@@ -1,18 +1,17 @@
 package com.fourseason.delivery.domain.order.repository;
 
 import static com.fourseason.delivery.domain.order.entity.QOrder.order;
-import static com.fourseason.delivery.domain.order.entity.QOrderMenu.orderMenu;
 
 import com.fourseason.delivery.domain.menu.exception.MenuErrorCode;
 import com.fourseason.delivery.domain.order.dto.response.OrderResponseDto;
+import com.fourseason.delivery.domain.order.dto.response.QOrderResponseDto;
 import com.fourseason.delivery.domain.order.entity.QOrder;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.group.GroupBy;
 import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import java.util.Optional;
@@ -40,31 +39,15 @@ public class OrderRepositoryCustom {
    * 페이징 결과 조회 메서드
    */
   private List<OrderResponseDto> getOrderList(Long memberId, PageRequestDto pageRequestDto) {
-    return jpaQueryFactory
-        .select(
-            Projections.constructor(OrderResponseDto.class,
-                order.shop.name,
-                order.address,
-                order.instruction,
-                order.totalPrice,
-                order.orderStatus,
-                order.orderType,
-                GroupBy.list(
-                    Projections.constructor(OrderResponseDto.MenuDto.class,
-                        orderMenu.name,
-                        orderMenu.price,
-                        orderMenu.quantity
-                    )
-                )
-            )
-        )
+    JPAQuery<OrderResponseDto> query = jpaQueryFactory
+        .select(new QOrderResponseDto(order))
         .from(order)
-        .leftJoin(orderMenu).on(orderMenu.order.id.eq(order.id))
         .where(getWhereConditions(memberId))
         .offset(pageRequestDto.getFirstIndex())
         .limit(pageRequestDto.getSize())
-        .orderBy(getOrderConditions(pageRequestDto))
-        .fetch();
+        .orderBy(getOrderConditions(pageRequestDto));
+
+    return query.fetch();
   }
 
   /**
