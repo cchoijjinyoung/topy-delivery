@@ -1,6 +1,7 @@
 package com.fourseason.delivery.domain.order.service;
 
-import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.MEMBER_NOT_FOUND;
+import static com.fourseason.delivery.domain.member.MemberErrorCode.MEMBER_NOT_FOUND;
+import static com.fourseason.delivery.domain.order.entity.OrderStatus.CANCELED;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.MENU_NOT_FOUND;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ORDER_NOT_FOUND;
 import static com.fourseason.delivery.domain.shop.exception.ShopErrorCode.SHOP_NOT_FOUND;
@@ -10,9 +11,9 @@ import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.menu.entity.Menu;
 import com.fourseason.delivery.domain.menu.repository.MenuRepository;
-import com.fourseason.delivery.domain.order.dto.response.OrderDetailResponseDto;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto.MenuDto;
+import com.fourseason.delivery.domain.order.dto.response.OrderDetailResponseDto;
 import com.fourseason.delivery.domain.order.dto.response.OrderSummaryResponseDto;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderMenu;
@@ -46,7 +47,6 @@ public class OrderCustomerService {
    */
   @Transactional
   public UUID createOrder(CreateOrderRequestDto request, Long memberId) {
-
     Member member = memberRepository.findById(memberId)
         .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
 
@@ -95,5 +95,29 @@ public class OrderCustomerService {
       PageRequestDto pageRequestDto
   ) {
     return orderRepositoryCustom.findOrderListWithPage(memberId, pageRequestDto);
+  }
+
+  @Transactional
+  public void cancelOrder(UUID orderId, Long memberId) {
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new CustomException(ORDER_NOT_FOUND));
+
+    order.assertOrderedBy(memberId);
+    order.assertOrderCancelAllowed();
+
+    order.updateStatus(CANCELED);
+  }
+
+  @Transactional
+  public void deleteOrder(UUID orderId, Long memberId) {
+    Member member = memberRepository.findById(memberId)
+        .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
+
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new CustomException(ORDER_NOT_FOUND));
+
+    order.assertOrderedBy(memberId);
+
+    order.deleteOf(member.getUsername());
   }
 }
