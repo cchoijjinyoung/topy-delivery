@@ -1,11 +1,16 @@
 package com.fourseason.delivery.domain.order.entity;
 
+import static com.fourseason.delivery.domain.order.entity.OrderStatus.*;
+import static com.fourseason.delivery.domain.order.entity.OrderType.*;
+import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.*;
+import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_PENDING_ORDER;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_SHOP_OWNER;
 import static jakarta.persistence.CascadeType.PERSIST;
 import static jakarta.persistence.FetchType.LAZY;
 
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
+import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
 import com.fourseason.delivery.global.exception.CustomException;
@@ -54,6 +59,10 @@ public class Order extends BaseTimeEntity {
   @Column(nullable = false)
   private OrderStatus orderStatus;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private OrderType orderType;
+
   @Column(nullable = false)
   private String address;
 
@@ -64,26 +73,29 @@ public class Order extends BaseTimeEntity {
 
   @Builder
   private Order(Shop shop, Member member, List<OrderMenu> orderMenuList,
-      OrderStatus orderStatus, String address, String instruction, int totalPrice) {
+      OrderStatus orderStatus, OrderType orderType, String address, String instruction, int totalPrice) {
     this.shop = shop;
     this.member = member;
     this.orderMenuList = orderMenuList;
+    this.orderType = orderType;
     this.orderStatus = orderStatus;
     this.address = address;
     this.instruction = instruction;
     this.totalPrice = totalPrice;
   }
 
-  public static Order addOf(
+  public static Order addByOnlineOrder(
       CreateOrderRequestDto dto,
       Shop shop,
       Member member,
       List<OrderMenu> orderMenuList,
-      int totalPrice) {
+      int totalPrice
+  ) {
     return Order.builder()
         .shop(shop)
         .member(member)
-        .orderStatus(OrderStatus.PENDING)
+        .orderStatus(PENDING)
+        .orderType(ONLINE)
         .address(dto.address())
         .instruction(dto.instruction())
         .totalPrice(totalPrice)
@@ -95,9 +107,21 @@ public class Order extends BaseTimeEntity {
     this.orderStatus = orderStatus;
   }
 
-  public void validateShopOwner(Long ownerId) {
+  public void assertShopOwner(Long ownerId) {
     if (!this.getShop().getMember().getId().equals(ownerId)) {
       throw new CustomException(NOT_SHOP_OWNER);
+    }
+  }
+
+  public void assertOrderIsPending() {
+    if (this.orderStatus != OrderStatus.PENDING) {
+      throw new CustomException(NOT_PENDING_ORDER);
+    }
+  }
+
+  public void assertOrderedBy(Long customerId) {
+    if (!this.getMember().getId().equals(customerId)) {
+      throw new CustomException(NOT_ORDERED_BY_CUSTOMER);
     }
   }
 }
