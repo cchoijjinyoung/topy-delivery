@@ -28,11 +28,30 @@ POST http://localhost:8080/api/owner/orders/adb6b9a4-77e5-4e77-a22f-61cd0f7a7f39
 Content-Type: application/json
 
 ### 점주 주문 상세 조회
-GET http://localhost:8080/api/owner/orders/adb6b9a4-77e5-4e77-a22f-61cd0f7a7f39?memberId=3
+GET http://localhost:8080/api/owner/orders/ab7d8f4b-43fc-47b5-808b-1de6c3259505?memberId=3
 
 ### 점주 주문 목록 조회
 GET http://localhost:8080/api/owner/orders?memberId=3&shopId=00000000-0000-0000-0000-000000000010&page=1&size=20&orderBy=latest
 
 ### 점주 주문 목록 조회(shop 검색 조건 x)
 GET http://localhost:8080/api/owner/orders?memberId=3&page=1&size=20&orderBy=latest
+
+### 점주 주문 접수
+POST http://localhost:8080/api/owner/orders?memberId=3
+Content-Type: application/json
+
+{
+  "shopId": "00000000-0000-0000-0000-000000000010",
+  "address": "주소",
+  "menuList": [
+    {
+      "menuId": "00000000-0000-0000-0000-000000000101",
+      "quantity": 1
+    },
+    {
+      "menuId": "00000000-0000-0000-0000-000000000102",
+      "quantity": 2
+    }
+  ]
+}
 

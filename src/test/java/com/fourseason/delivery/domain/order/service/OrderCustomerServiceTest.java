@@ -2,6 +2,7 @@ package com.fourseason.delivery.domain.order.service;
 
 import static com.fourseason.delivery.domain.member.entity.Role.CUSTOMER;
 import static com.fourseason.delivery.domain.member.entity.Role.OWNER;
+import static com.fourseason.delivery.domain.menu.entity.MenuStatus.SHOW;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.PENDING;
 import static com.fourseason.delivery.domain.order.entity.OrderType.ONLINE;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.MEMBER_NOT_FOUND;
@@ -129,7 +130,8 @@ class OrderCustomerServiceTest {
       when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
       when(shopRepository.findById(request.shopId())).thenReturn(
           Optional.of(shop));
-      when(menuRepository.findByIdInAndDeletedAtIsNull(List.of(request.menuList().get(0).menuId())))
+      when(menuRepository.findByIdInAndMenuStatusAndShopAndDeletedAtIsNull(
+          List.of(request.menuList().get(0).menuId()), SHOW, shop))
           .thenReturn(List.of());
 
       // when
