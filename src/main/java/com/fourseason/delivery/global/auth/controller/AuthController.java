@@ -6,6 +6,7 @@ import com.fourseason.delivery.global.auth.dto.request.SignInRequestDto;
 import com.fourseason.delivery.global.auth.dto.request.SignUpRequestDto;
 import com.fourseason.delivery.global.auth.dto.TokenDto;
 import com.fourseason.delivery.global.auth.service.AuthService;
+import com.fourseason.delivery.global.exception.CustomException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Map;
+
+import static com.fourseason.delivery.global.auth.exception.AuthErrorCode.ACCESS_TOKEN_NOT_FOUND;
 
 @Slf4j
 @RestController
@@ -38,21 +42,12 @@ public class AuthController {
                 Role.CUSTOMER.toString()
         );
         authService.signUp(newMember);
+
         URI location = UriComponentsBuilder.newInstance()
                 .path("/api/sign-in")
                 .build()
                 .toUri();
         return ResponseEntity.created(location).build();
-    }
-
-    @Secured("ROLE_MASTER")
-    @PostMapping("/admin/sign-up")
-    @ResponseStatus(HttpStatus.CREATED)
-    public String adminSignUp(
-            @RequestBody @Valid SignUpRequestDto request
-    ) {
-        authService.signUp(request);
-        return request.role() + " member 생셩.";
     }
 
     @PostMapping("/sign-in")
@@ -66,6 +61,35 @@ public class AuthController {
                 .build();
     }
 
+    // refresh token 요청 경로, filter 에서 체크되지 않도록 /api/sign
+    @PostMapping("/sign-refresh")
+    public ResponseEntity<Void> refreshToken(
+            @RequestHeader("Authorization") String accessToken,
+            @RequestHeader("X-Refresh-Token") String refreshToken
+    ) {
+        if (accessToken == null || !accessToken.startsWith("Bearer ") || refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        String newAccessToken = authService.refresh(accessToken.substring(7), refreshToken);
+
+        return ResponseEntity.ok()
+                .header("Authorization", "Bearer " + newAccessToken)
+                .header("X-Refresh-Token", refreshToken)
+                .build();
+    }
+
+    @Secured("ROLE_MASTER")
+    @PostMapping("/admin/sign-up")
+    @ResponseStatus(HttpStatus.CREATED)
+    public String adminSignUp(
+            @RequestBody @Valid SignUpRequestDto request
+    ) {
+        authService.signUp(request);
+        return request.role() + " member 생셩.";
+    }
+
+    // TODO: 테스트 코드로 이동...
     //    권한 테스트용
     @Secured("ROLE_MASTER")
     @GetMapping("/admin")
