@@ -24,6 +24,9 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     public void signUp(SignUpRequestDto request) {
+        // username 중복 불가
+        validateDuplicateUsername(request.username());
+
         // email 중복 불가
         validateDuplicateEmail(request.email());
 
@@ -40,7 +43,7 @@ public class AuthService {
         }
 
         // 토큰 생성
-        String accessToken = jwtUtil.createAccessToken(member.getUsername(), member.getRole());
+        String accessToken = jwtUtil.createAccessToken(member.getId(), member.getUsername(), member.getRole());
         String refreshToken = jwtUtil.createRefreshToken(member.getUsername());
         return new TokenDto(accessToken, refreshToken);
     }
@@ -49,6 +52,12 @@ public class AuthService {
         // 단순 존재여부 확인은 exists 를 활용 하는 것이 더 낫다.
         if (memberRepository.existsByEmail(email)) {
             throw new CustomException(MEMBER_DUPLICATE_EMAIL);
+        }
+    }
+
+    private void validateDuplicateUsername(String username) {
+        if (memberRepository.existsByUsername(username)) {
+            throw new CustomException(MEMBER_DUPLICATE_USERNAME);
         }
     }
 }
