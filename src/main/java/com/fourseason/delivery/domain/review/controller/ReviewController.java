@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/orders/{order_id}/reviews")
@@ -22,7 +23,7 @@ public class ReviewController {
      * 리뷰 등록
      */
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<Void> createReview(@PathVariable String orderId,
+    public ResponseEntity<Void> createReview(@PathVariable UUID orderId,
                                              @RequestPart("review") ReviewRequestDto reviewRequestDto) {
         reviewService.createReview(orderId, reviewRequestDto);
         return ResponseEntity.ok().build();
@@ -33,8 +34,8 @@ public class ReviewController {
      * 특정 리뷰 조회
      */
     @GetMapping("/{review_id}")
-    public ResponseEntity<ReviewResponseDto> getReview(@PathVariable String orderId,
-                                                       @PathVariable String reviewId) {
+    public ResponseEntity<ReviewResponseDto> getReview(@PathVariable UUID orderId,
+                                                       @PathVariable UUID reviewId) {
         return ResponseEntity.ok(reviewService.getReview(orderId, reviewId));
     }
 
@@ -42,8 +43,8 @@ public class ReviewController {
      * 리뷰 수정
      */
     @PostMapping("/{review_id}")
-    public ResponseEntity<ReviewResponseDto> updateReview(@PathVariable String orderId,
-                                                          @PathVariable String reviewId,
+    public ResponseEntity<ReviewResponseDto> updateReview(@PathVariable UUID orderId,
+                                                          @PathVariable UUID reviewId,
                                                           @RequestBody ReviewRequestDto reviewRequestDto) {
         return ResponseEntity.ok(reviewService.updateReview(orderId, reviewId, reviewRequestDto));
     }
@@ -53,8 +54,8 @@ public class ReviewController {
      * 리뷰 삭제
      */
     @DeleteMapping("/{review_id}")
-    public ResponseEntity<Void> deleteReview(@PathVariable String orderId,
-                                             @PathVariable String reviewId) {
+    public ResponseEntity<Void> deleteReview(@PathVariable UUID orderId,
+                                             @PathVariable UUID reviewId) {
         reviewService.deleteReview(orderId, reviewId);
         return ResponseEntity.ok().build();
     }

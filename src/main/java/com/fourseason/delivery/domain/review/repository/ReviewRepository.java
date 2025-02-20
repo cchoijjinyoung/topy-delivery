@@ -11,9 +11,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
-    Optional<Review> findByIdAndOrderId(UUID reviewId, UUID orderId);
-
+ 
+    Optional<Review> findByIdAndOrderIdAndDeletedAtIsNull(UUID reviewId, UUID orderId);
     List<Review> findByMemberAndDeletedAtIsNull(Member member);
-
-    List<Review> findByShop(Shop shop);
+    List<Review> findByShopAndDeletedAtIsNull(Shop shop);
 }

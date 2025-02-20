@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,7 +23,7 @@ public class ShopReviewController {
      * 특정 가게 리뷰 리스트 조회
      */
     @GetMapping("/api/shops/{shop_id}/reviews")
-    public ResponseEntity<List<ReviewResponseDto>> getReviewList(@PathVariable String shopId) {
+    public ResponseEntity<List<ReviewResponseDto>> getReviewList(@PathVariable UUID shopId) {
         return ResponseEntity.ok(reviewService.getReviewList(shopId));
     }
 }
