@@ -1,6 +1,8 @@
 package com.fourseason.delivery.global.auth.dto.request;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 public record SignUpRequestDto (
         @NotBlank(message = "username 은 필수 항목 입니다.")
@@ -16,6 +18,10 @@ public record SignUpRequestDto (
         String password,
 
         @Pattern(regexp = "^\\d{3}-\\d{3,4}-\\d{4}$", message = "전화번호 형식에 맞게 입력해 주세요.")
-        String phoneNumber
+        String phoneNumber,
+
+        // 직접 받을 수 있는 항목을 넣었는데 enum 값 변경에 유연하지 않다...
+        @Pattern(regexp = "CUSTOMER|MANAGER|OWNER|MASTER", message = "권한 이름을 확인해 주세요.")
+        String role
 ) {
 }

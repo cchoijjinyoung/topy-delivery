@@ -30,7 +30,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getServletPath().startsWith("/api");
+        return request.getServletPath().startsWith("/api/sign");
     }
 
     @Override
@@ -46,7 +46,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
         try {
 
             Claims claims = jwtUtil.validateToken(accessToken);
-            log.info(claims.toString());
+//            log.info(claims.toString());
 
             CustomPrincipal principal = new CustomPrincipal(claims.get("id", Long.class),
                     claims.getSubject());
@@ -60,11 +60,11 @@ public class JwtCheckFilter extends OncePerRequestFilter {
                                     new SimpleGrantedAuthority("ROLE_" + claims.get("role").toString())
                             )
                     );
-
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
 
         } catch (Exception e) {
+            log.error(e.getMessage());
             throw new CustomException(ACCESS_TOKEN_NOT_AVAILABLE);
         }
     }
