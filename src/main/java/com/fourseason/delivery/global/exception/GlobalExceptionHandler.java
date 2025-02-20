@@ -1,5 +1,6 @@
 package com.fourseason.delivery.global.exception;
 
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -7,7 +8,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -27,30 +29,25 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseEntity> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        return ResponseEntity.ok(ErrorResponseEntity.builder()
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponseEntity.builder()
                 .status(HttpStatus.BAD_REQUEST.value())
-                .message(e.getBindingResult().getAllErrors().get(0).getDefaultMessage())
+                .message(e.getBindingResult().getAllErrors().stream()
+                        .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                        .collect(Collectors.joining("\n"))
+                )
                 .build());
     }
 
     /**
-     * Handle NoHandlerFoundException
-     */
-    @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<ErrorResponseEntity> handleNoHandlerFoundException(NoHandlerFoundException e) {
-        return ResponseEntity.ok(ErrorResponseEntity.builder()
-                .status(HttpStatus.NOT_FOUND.value())
-                .message("요청하신 페이지가 없습니다.")
-                .build());
-    }
-
-    /**
-     * Handle AccessDeniedHandler
+     * Handle AccessDeniedException
      */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponseEntity> handleAccessDeniedException(AccessDeniedException e) {
-        return ResponseEntity.ok(ErrorResponseEntity.builder()
-                .status(HttpStatus.UNAUTHORIZED.value())
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponseEntity.builder()
+                .status(HttpStatus.FORBIDDEN.value())
                 .message("권한이 없습니다.")
                 .build());
     }
