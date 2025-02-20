@@ -1,9 +1,8 @@
 package com.fourseason.delivery.domain.member.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
-public record AddressRequestDto (
+public record AddressAddRequestDto(
 
         @NotBlank(message = "주소는 필수 입력 값입니다.")
         String address,

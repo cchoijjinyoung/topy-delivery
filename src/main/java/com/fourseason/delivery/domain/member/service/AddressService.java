@@ -1,8 +1,10 @@
 package com.fourseason.delivery.domain.member.service;
 
 import com.fourseason.delivery.domain.member.MemberErrorCode;
-import com.fourseason.delivery.domain.member.dto.request.AddressRequestDto;
-import com.fourseason.delivery.domain.member.dto.response.AddressResponseDto;
+import com.fourseason.delivery.domain.member.dto.request.AddressAddRequestDto;
+import com.fourseason.delivery.domain.member.dto.request.AddressUpdateRequestDto;
+import com.fourseason.delivery.domain.member.dto.response.AddressAddResponseDto;
+import com.fourseason.delivery.domain.member.dto.response.AddressUpdateResponseDto;
 import com.fourseason.delivery.domain.member.entity.Address;
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.exception.AddressErrorCode;
@@ -27,28 +29,28 @@ public class AddressService {
 
 
     @Transactional(readOnly = true)
-    public List<AddressResponseDto> getAddressList() {
+    public List<AddressAddResponseDto> getAddressList() {
         Member member = getAuthenticatedMember();
 
         List<Address> addresses = addressRepository.findByMemberAndDeletedAtIsNull(member);
 
         return addresses.stream()
-                .map(AddressResponseDto::of)
+                .map(AddressAddResponseDto::of)
                 .toList();
     }
 
     @Transactional
-    public AddressResponseDto addAddress(AddressRequestDto addressRequestDto) {
+    public AddressAddResponseDto addAddress(AddressAddRequestDto addressAddRequestDto) {
         Member member = getAuthenticatedMember();
 
-        Address address = Address.addOf(addressRequestDto, member);
+        Address address = Address.addOf(addressAddRequestDto, member);
         Address savedAddress = addressRepository.save(address);
 
-        return AddressResponseDto.of(savedAddress);
+        return AddressAddResponseDto.of(savedAddress);
     }
 
     @Transactional
-    public AddressResponseDto updateAddress(UUID addressId, AddressRequestDto addressRequestDto) {
+    public AddressUpdateResponseDto updateAddress(UUID addressId, AddressUpdateRequestDto addressUpdateRequestDto) {
         Member member = getAuthenticatedMember();
 
         Address address = addressRepository.findByIdAndDeletedAtIsNull(addressId)
@@ -58,9 +60,9 @@ public class AddressService {
             throw new CustomException(AddressErrorCode.ADDRESS_NOT_BELONG_TO_MEMBER);
         }
 
-        address.updateOf(addressRequestDto);
+        address.updateOf(addressUpdateRequestDto);
 
-        return AddressResponseDto.of(addressRepository.save(address));
+        return AddressUpdateResponseDto.of(addressRepository.save(address));
     }
 
     @Transactional

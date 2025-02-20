@@ -1,6 +1,7 @@
 package com.fourseason.delivery.domain.member.entity;
 
-import com.fourseason.delivery.domain.member.dto.request.AddressRequestDto;
+import com.fourseason.delivery.domain.member.dto.request.AddressAddRequestDto;
+import com.fourseason.delivery.domain.member.dto.request.AddressUpdateRequestDto;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -38,7 +39,7 @@ public class Address extends BaseTimeEntity {
         this.member = member;
     }
 
-    public static Address addOf(AddressRequestDto dto, Member member) {
+    public static Address addOf(AddressAddRequestDto dto, Member member) {
         return Address.builder()
                 .address(dto.address())
                 .detailAddress(dto.detailAddress())
@@ -46,8 +47,8 @@ public class Address extends BaseTimeEntity {
                 .build();
     }
 
-    public void updateOf(AddressRequestDto addressRequestDto) {
-        this.address = addressRequestDto.address();
-        this.detailAddress = addressRequestDto.detailAddress();
+    public void updateOf(AddressUpdateRequestDto dto) {
+        this.address = dto.address();
+        this.detailAddress = dto.detailAddress();
     }
 }

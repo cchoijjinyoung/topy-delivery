@@ -4,12 +4,12 @@ import com.fourseason.delivery.domain.member.entity.Address;
 import lombok.Builder;
 
 @Builder
-public record AddressResponseDto (
+public record AddressAddResponseDto(
         String address,
         String detailAddress
 ) {
-    public static AddressResponseDto of(Address address) {
-        return AddressResponseDto.builder()
+    public static AddressAddResponseDto of(Address address) {
+        return AddressAddResponseDto.builder()
                 .address(address.getAddress())
                 .detailAddress(address.getDetailAddress())
                 .build();

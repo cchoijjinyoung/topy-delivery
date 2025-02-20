@@ -1,8 +1,11 @@
 package com.fourseason.delivery.domain.member.controller;
 
-import com.fourseason.delivery.domain.member.dto.request.AddressRequestDto;
-import com.fourseason.delivery.domain.member.dto.response.AddressResponseDto;
+import com.fourseason.delivery.domain.member.dto.request.AddressAddRequestDto;
+import com.fourseason.delivery.domain.member.dto.request.AddressUpdateRequestDto;
+import com.fourseason.delivery.domain.member.dto.response.AddressAddResponseDto;
+import com.fourseason.delivery.domain.member.dto.response.AddressUpdateResponseDto;
 import com.fourseason.delivery.domain.member.service.AddressService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +24,7 @@ public class AddressController {
      * 주소 목록 조회
      */
     @GetMapping
-    public ResponseEntity<List<AddressResponseDto>> getAddressList() {
+    public ResponseEntity<List<AddressAddResponseDto>> getAddressList() {
         return ResponseEntity.ok(addressService.getAddressList());
     }
 
@@ -30,8 +33,8 @@ public class AddressController {
      * 주소 추가
      */
     @PostMapping
-    public ResponseEntity<AddressResponseDto> addAddress(@RequestBody AddressRequestDto addressRequestDto) {
-        return ResponseEntity.ok(addressService.addAddress(addressRequestDto));
+    public ResponseEntity<AddressAddResponseDto> addAddress(@Valid @RequestBody AddressAddRequestDto addressAddRequestDto) {
+        return ResponseEntity.ok(addressService.addAddress(addressAddRequestDto));
     }
 
 
@@ -39,9 +42,9 @@ public class AddressController {
      * 주소 수정
      */
     @PutMapping("/{address_id}")
-    public ResponseEntity<AddressResponseDto> updateAddress(@PathVariable UUID addressId,
-                                                            @RequestBody AddressRequestDto addressRequestDto) {
-        return ResponseEntity.ok(addressService.updateAddress(addressId, addressRequestDto));
+    public ResponseEntity<AddressUpdateResponseDto> updateAddress(@PathVariable UUID addressId,
+                                                                  @Valid @RequestBody AddressUpdateRequestDto addressUpdateRequestDto) {
+        return ResponseEntity.ok(addressService.updateAddress(addressId, addressUpdateRequestDto));
     }
 
 
