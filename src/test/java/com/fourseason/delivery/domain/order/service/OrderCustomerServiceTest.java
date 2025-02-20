@@ -1,21 +1,29 @@
 package com.fourseason.delivery.domain.order.service;
 
+import static com.fourseason.delivery.domain.member.entity.Role.CUSTOMER;
+import static com.fourseason.delivery.domain.member.entity.Role.OWNER;
+import static com.fourseason.delivery.domain.order.entity.OrderStatus.PENDING;
+import static com.fourseason.delivery.domain.order.entity.OrderType.ONLINE;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.MEMBER_NOT_FOUND;
+import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ORDER_NOT_FOUND;
 import static com.fourseason.delivery.domain.shop.exception.ShopErrorCode.SHOP_NOT_FOUND;
+import static com.fourseason.delivery.fixture.MemberFixture.createMember;
+import static com.fourseason.delivery.fixture.OrderFixture.createOrder;
+import static com.fourseason.delivery.fixture.OrderMenuFixture.createOrderMenuList;
+import static com.fourseason.delivery.fixture.OrderMenuFixture.createOrderMenuWithQuantity;
+import static com.fourseason.delivery.fixture.ShopFixture.createShop;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
-import com.fourseason.delivery.domain.menu.entity.Menu;
 import com.fourseason.delivery.domain.menu.repository.MenuRepository;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
 import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto.MenuDto;
+import com.fourseason.delivery.domain.order.dto.response.OrderDetailResponseDto;
 import com.fourseason.delivery.domain.order.entity.Order;
+import com.fourseason.delivery.domain.order.entity.OrderMenu;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.domain.shop.repository.ShopRepository;
@@ -96,7 +104,7 @@ class OrderCustomerServiceTest {
     @DisplayName("주문 요청 시 존재하지 않은 가게면, 예외가 발생한다.")
     void shop_not_found() {
       // given
-      Member member = Member.builder().build();
+      Member member = createMember(CUSTOMER);
 
       when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
       when(shopRepository.findById(request.shopId())).thenThrow(
@@ -114,13 +122,14 @@ class OrderCustomerServiceTest {
     @DisplayName("주문 요청 시 존재하지 않은 메뉴면, 예외가 발생한다.")
     void menu_not_found() {
       // given
-      Member member = Member.builder().build();
-      Shop shop = Shop.builder().build();
+      Member member = createMember(CUSTOMER);
+      Member owner = createMember(OWNER);
+      Shop shop = createShop(owner);
 
       when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
       when(shopRepository.findById(request.shopId())).thenReturn(
           Optional.of(shop));
-      when(menuRepository.findByIdIn(List.of(request.menuList().get(0).menuId())))
+      when(menuRepository.findByIdInAndDeletedAtIsNull(List.of(request.menuList().get(0).menuId())))
           .thenReturn(List.of());
 
       // when
@@ -129,36 +138,85 @@ class OrderCustomerServiceTest {
           .isInstanceOf(CustomException.class)
           .hasMessage("해당 메뉴를 찾을 수 없습니다.");
     }
+  }
+
+  @Nested
+  class getOrder {
 
     @Test
-    @DisplayName("주문 요청 성공")
-    void success() {
+    @DisplayName("고객 단건 주문 조회 시, 존재하지 않는 주문이면 예외가 발생한다.")
+    void order_not_found() {
       // given
-      Member member = Member.builder().build();
-      when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
-
-      Shop shop = Shop.builder().build();
-      when(shopRepository.findById(request.shopId())).thenReturn(Optional.of(shop));
-
-      Menu menu = mock(Menu.class);
-      UUID menuId = request.menuList().get(0).menuId();
-
-      when(menu.getId()).thenReturn(menuId);
-      when(menu.getPrice()).thenReturn(1000);
-      when(menuRepository.findByIdIn(List.of(request.menuList().get(0).menuId())))
-          .thenReturn(List.of(menu));
-
+      Member loginMember = createMember(CUSTOMER);
       UUID orderId = UUID.randomUUID();
-      Order savedOrder = mock(Order.class);
-      when(savedOrder.getId()).thenReturn(orderId);
-      when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+      when(orderRepository.findById(orderId)).thenThrow(new CustomException(ORDER_NOT_FOUND));
 
       // when
-      UUID savedOrderId = orderCustomerService.createOrder(request, memberId);
+      // then
+      assertThatThrownBy(() -> orderCustomerService.getOrder(orderId, loginMember.getId()))
+          .isInstanceOf(CustomException.class)
+          .hasMessage("해당 주문을 찾을 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("고객 단건 주문 조회 시, 해당 주문을 요청한 고객이 아니면 예외가 발생한다.")
+    void not_ordered_by_customer() {
+      // given
+      Member loginMember = createMember(CUSTOMER);
+
+      Member owner = createMember(OWNER);
+      Shop shop = createShop(owner);
+      List<OrderMenu> orderMenuList = createOrderMenuList(
+          createOrderMenuWithQuantity("치킨", 5000, 1),
+          createOrderMenuWithQuantity("피자", 10000, 2),
+          createOrderMenuWithQuantity("족발", 20000, 3)
+      );
+
+      Member another = createMember(CUSTOMER);
+      Order order = createOrder(another, shop, PENDING, ONLINE, orderMenuList);
+      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+
+      // when
+      // then
+      assertThatThrownBy(() -> orderCustomerService.getOrder(order.getId(), loginMember.getId()))
+          .isInstanceOf(CustomException.class)
+          .hasMessage("해당 주문을 요청한 고객이 아닙니다.");
+    }
+
+    @Test
+    @DisplayName("고객 단건 주문 조회 성공")
+    void success() {
+      // given
+      Member loginMember = createMember(CUSTOMER);
+
+      Member owner = createMember(OWNER);
+      Shop shop = createShop(owner);
+      List<OrderMenu> orderMenuList = createOrderMenuList(
+          createOrderMenuWithQuantity("치킨", 5000, 1),
+          createOrderMenuWithQuantity("피자", 10000, 2),
+          createOrderMenuWithQuantity("족발", 20000, 3)
+      );
+
+      Order order = createOrder(loginMember, shop, PENDING, ONLINE, orderMenuList);
+      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+
+      // when
+      OrderDetailResponseDto response = orderCustomerService.getOrder(order.getId(),
+          loginMember.getId());
 
       // then
-      verify(orderRepository).save(any());
-      assertThat(savedOrderId).isEqualTo(orderId);
+      assertThat(response.shopName()).isEqualTo(order.getShop().getName());
+      assertThat(response.address()).isEqualTo(order.getAddress());
+      assertThat(response.instruction()).isEqualTo(order.getInstruction());
+      assertThat(response.totalPrice()).isEqualTo(order.getTotalPrice());
+      assertThat(response.status()).isEqualTo(PENDING);
+      assertThat(response.type()).isEqualTo(ONLINE);
+      assertThat(response.menuList().get(0).name()).isEqualTo(
+          order.getOrderMenuList().get(0).getName());
+      assertThat(response.menuList().get(0).price()).isEqualTo(
+          order.getOrderMenuList().get(0).getPrice());
+      assertThat(response.menuList().get(0).quantity()).isEqualTo(
+          order.getOrderMenuList().get(0).getQuantity());
     }
   }
 }

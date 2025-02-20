@@ -1,3 +1,30 @@
-### 주문 수락
-POST http://localhost:8080/api/owner/orders/11111111-1111-1111-1111-111111111111/accept?memberId=1
+### 고객 주문 요청
+POST http://localhost:8080/api/customer/orders?memberId=5
 Content-Type: application/json
+
+{
+  "shopId": "00000000-0000-0000-0000-000000000010",
+  "address": "주소",
+  "menuList": [
+    {
+      "menuId": "00000000-0000-0000-0000-000000000101",
+      "quantity": 1
+    },
+    {
+      "menuId": "00000000-0000-0000-0000-000000000102",
+      "quantity": 2
+    }
+  ]
+}
+
+### 고객 주문 상세 조회
+GET http://localhost:8080/api/customer/orders/adb6b9a4-77e5-4e77-a22f-61cd0f7a7f39?memberId=5
+
+### 고객 주문 리스트 조회
+GET http://localhost:8080/api/customer/orders?memberId=5&page=1&size=20&orderBy=latest
+Content-Type: application/json
+
+### 주문 수락
+POST http://localhost:8080/api/owner/orders/adb6b9a4-77e5-4e77-a22f-61cd0f7a7f39/accept?memberId=3
+Content-Type: application/json
+
