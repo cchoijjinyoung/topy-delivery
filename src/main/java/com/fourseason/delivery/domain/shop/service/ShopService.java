@@ -1,5 +1,7 @@
 package com.fourseason.delivery.domain.shop.service;
 
+import com.fourseason.delivery.domain.image.enums.S3Folder;
+import com.fourseason.delivery.domain.image.service.FileService;
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.entity.Role;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
@@ -20,6 +22,7 @@ import com.fourseason.delivery.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,6 +40,8 @@ public class ShopService {
     private final CategoryRepository categoryRepository;
 
     private final MemberRepository memberRepository;
+
+    private final FileService fileService;
 
     @Transactional(readOnly = true)
     public PageResponseDto<ShopResponseDto> getShopList(PageRequestDto pageRequestDto) {
@@ -57,7 +62,7 @@ public class ShopService {
     }
 
     @Transactional
-    public void registerShop(CreateShopRequestDto createShopRequestDto) {
+    public void registerShop(CreateShopRequestDto createShopRequestDto, List<MultipartFile> images) {
         // TODO: 현재 임시 유저를 넣었음. 이후 수정 필요.
         Member member = memberRepository.findById(1L)
             .orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다."));
@@ -66,8 +71,11 @@ public class ShopService {
                 .orElseThrow(() -> new CustomException(ShopErrorCode.CATEGORY_NOT_FOUND));
 
         Shop shop = Shop.addOf(createShopRequestDto, member, category);
-
         shopRepository.save(shop);
+
+        for (MultipartFile file : images) {
+            fileService.saveImageFile(S3Folder.SHOP, file, shop.getId());
+        }
     }
 
     @Transactional

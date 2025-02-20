@@ -1,5 +1,7 @@
 package com.fourseason.delivery.domain.menu.service;
 
+import com.fourseason.delivery.domain.image.enums.S3Folder;
+import com.fourseason.delivery.domain.image.service.FileService;
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.menu.dto.request.CreateMenuRequestDto;
@@ -20,6 +22,7 @@ import com.fourseason.delivery.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,6 +40,8 @@ public class MenuService {
     private final ShopRepository shopRepository;
 
     private final MenuRepositoryCustom menuRepositoryCustom;
+
+    private final FileService fileService;
 
     @Transactional(readOnly = true)
     public PageResponseDto<MenuResponseDto> getMenuList(final UUID shopId, PageRequestDto pageRequestDto) {
@@ -57,12 +62,16 @@ public class MenuService {
     }
 
     @Transactional
-    public void registerMenu(CreateMenuRequestDto createMenuRequestDto) {
+    public void registerMenu(CreateMenuRequestDto createMenuRequestDto, List<MultipartFile> images) {
         Shop shop = shopRepository.findById(UUID.fromString(createMenuRequestDto.shopId()))
             .orElseThrow(() -> new CustomException(ShopErrorCode.SHOP_NOT_FOUND));
 
         Menu menu = Menu.addOf(createMenuRequestDto, shop);
         menuRepository.save(menu);
+
+        for (MultipartFile file : images) {
+            fileService.saveImageFile(S3Folder.MENU, file, menu.getId());
+        }
     }
 
     @Transactional
