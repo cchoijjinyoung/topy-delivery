@@ -22,9 +22,17 @@ GET http://localhost:8080/api/customer/orders/adb6b9a4-77e5-4e77-a22f-61cd0f7a7f
 
 ### 고객 주문 리스트 조회
 GET http://localhost:8080/api/customer/orders?memberId=5&page=1&size=20&orderBy=latest
-Content-Type: application/json
 
-### 주문 수락
+### 점주 주문 수락
 POST http://localhost:8080/api/owner/orders/adb6b9a4-77e5-4e77-a22f-61cd0f7a7f39/accept?memberId=3
 Content-Type: application/json
+
+### 점주 주문 상세 조회
+GET http://localhost:8080/api/owner/orders/adb6b9a4-77e5-4e77-a22f-61cd0f7a7f39?memberId=3
+
+### 점주 주문 목록 조회
+GET http://localhost:8080/api/owner/orders?memberId=3&shopId=00000000-0000-0000-0000-000000000010&page=1&size=20&orderBy=latest
+
+### 점주 주문 목록 조회(shop 검색 조건 x)
+GET http://localhost:8080/api/owner/orders?memberId=3&page=1&size=20&orderBy=latest
 
