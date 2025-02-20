@@ -30,7 +30,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getServletPath().startsWith("/api/sign");
+        return request.getServletPath().startsWith("/api");
     }
 
     @Override
