@@ -28,34 +28,25 @@ class JwtUtilTest {
     @Test
     @DisplayName("토큰 생성 확인")
     void createToken() {
-        String token = jwtUtil.createAccessToken("testUser", Role.CUSTOMER);
+        String token = jwtUtil.createAccessToken(1L, "testUser", Role.CUSTOMER);
 
         log.info(token);
         assertNotNull(token);
-        assertTrue(token.startsWith("Bearer "));
-    }
-
-    @Test
-    @DisplayName("생성된 토큰 검증")
-    void validateToken() {
-        String token = jwtUtil.createAccessToken("testUser", Role.CUSTOMER);
-        token = token.replace("Bearer ", "");
-
-//        assertTrue(jwtUtil.validateToken(token));
     }
 
     @Test
     @DisplayName("access 토큰 값 검증")
     void testGetMemberInfoFromAccessToken() {
-        String token = jwtUtil.createAccessToken("testUser", Role.CUSTOMER);
+        String token = jwtUtil.createAccessToken(3L, "testUser", Role.CUSTOMER);
 
         Claims claims = jwtUtil.validateToken(token);
 
         log.info("access 클레임 확인: {}", claims.toString());
 
         assertNotNull(claims);
-        assertEquals("testUser", claims.getSubject());
-        assertEquals("CUSTOMER", claims.get("role").toString());
+        assertEquals(3L, claims.get("id", Long.class));
+        assertEquals("testUser", claims.get("username", String.class));
+        assertEquals(Role.CUSTOMER.toString(), claims.get("role", String.class));
     }
 
     @Test
@@ -68,6 +59,6 @@ class JwtUtilTest {
         log.info("refresh 클레임 확인: {}", claims.toString());
 
         assertNotNull(claims);
-        assertEquals("testUser", claims.getSubject());
+        assertEquals("testUser", claims.get("username", String.class));
     }
 }

@@ -1,9 +1,9 @@
 package com.fourseason.delivery.global.auth;
 
 import com.fourseason.delivery.domain.member.entity.Role;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Jwt 생성 및 검증 담당
@@ -38,24 +39,27 @@ public class JwtUtil {
         this.refreshExpiration = refreshExpiration;
     }
 
-    public String createAccessToken(String username, Role role) {
-        return generateToken(username, role, Duration.ofMinutes(accessExpiration));
+    public String createAccessToken(Long id, String username, Role role) {
+        Map<String, Object> claims = Map.of(
+                "id", id,
+                "username", username,
+                "role", role);
+        return generateToken(claims, Duration.ofMinutes(accessExpiration));
     }
 
     public String createRefreshToken(String username) {
-        return generateToken(username, null, Duration.ofMinutes(refreshExpiration));
+        return generateToken(Map.of("username", username), Duration.ofDays(refreshExpiration));
     }
 
     // 토큰 생성
-    private String generateToken(String username, Role role, Duration expiration) {
+    private String generateToken(Map<String, Object> claims, Duration expiration) {
         // aws 의 리전이 어디에 생길지 모르니 타임 존을 명확하게 ..
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
         return Jwts.builder()
-                .subject(username)
-                .claim("role", role)
+                .claims(claims)
                 .issuer(issuer)
                 .issuedAt(Date.from(now.toInstant()))
-                .expiration(Date.from(now.plusMinutes(expiration.toMillis()).toInstant()))
+                .expiration(Date.from(now.plus(expiration).toInstant()))
                 .signWith(secretKey)
                 .compact();
     }
