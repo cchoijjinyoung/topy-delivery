@@ -1,6 +1,7 @@
 package com.fourseason.delivery.domain.member.entity;
 
 import com.fourseason.delivery.global.auth.dto.request.SignUpRequestDto;
+import com.fourseason.delivery.domain.member.dto.request.MemberRequestDto;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -50,5 +51,24 @@ public class Member extends BaseTimeEntity {
                 .phoneNumber(request.phoneNumber())
                 .role(Role.CUSTOMER)
                 .build();
+    }
+
+    public void updateOf(MemberRequestDto dto) {
+        if (dto.username() != null) {
+            this.username = dto.username();
+        }
+        if (dto.email() != null) {
+            this.email = dto.email();
+        }
+        if (dto.phoneNumber() != null) {
+            this.phoneNumber = dto.phoneNumber();
+        }
+        if (dto.role() != null) {
+            this.role = dto.role();
+        }
+    }
+
+    public void deleteOf(String deletedBy) {
+        super.deleteOf(deletedBy);
     }
 }

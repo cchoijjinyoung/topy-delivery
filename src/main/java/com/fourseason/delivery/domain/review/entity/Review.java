@@ -66,4 +66,8 @@ public class Review extends BaseTimeEntity {
         this.content = dto.content();
         this.rating = dto.rating();
     }
+
+    public void deleteOf(String deletedBy) {
+        super.deleteOf(deletedBy);
+    }
 }

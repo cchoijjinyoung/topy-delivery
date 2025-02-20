@@ -23,7 +23,8 @@ public class OrderOwnerService {
     Order order = orderRepository.findById(orderId).
         orElseThrow(() -> new CustomException(ORDER_NOT_FOUND));
 
-    order.validateShopOwner(ownerId);
+    order.assertShopOwner(ownerId);
+    order.assertOrderIsPending();
 
     order.updateStatus(ACCEPTED);
   }

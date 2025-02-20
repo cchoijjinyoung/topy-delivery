@@ -11,7 +11,6 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -19,6 +18,9 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
+
+import static com.querydsl.core.group.GroupBy.list;
+import static com.querydsl.core.group.GroupBy.groupBy;
 
 import static com.fourseason.delivery.domain.shop.entity.QShop.shop;
 import static com.fourseason.delivery.domain.shop.entity.QShopImage.shopImage;
@@ -54,22 +56,23 @@ public class ShopRepositoryCustom {
      */
     private List<ShopResponseDto> getShopList(PageRequestDto pageRequestDto) {
         return jpaQueryFactory
-            .select(Projections.constructor(ShopResponseDto.class,
-                Expressions.stringTemplate("CAST({0} AS string)", shop.id),
-                shop.name,
-                shop.description,
-                shop.tel,
-                shop.address,
-                shop.detailAddress,
-                GroupBy.list(shopImage.imageUrl)
-            ))
             .from(shop)
             .leftJoin(shopImage).on(shop.id.eq(shopImage.shop.id))
             .where(getWhereConditions())
             .offset(pageRequestDto.getFirstIndex())
             .limit(pageRequestDto.getSize())
             .orderBy(getOrderConditions(pageRequestDto))
-            .fetch();
+            .transform(groupBy(shop.id).list(
+                Projections.constructor(ShopResponseDto.class,
+                    Expressions.stringTemplate("CAST({0} AS string)", shop.id),
+                    shop.name,
+                    shop.description,
+                    shop.tel,
+                    shop.address,
+                    shop.detailAddress,
+                    list(shopImage.imageUrl)
+                )
+            ));
     }
 
     /**
@@ -77,22 +80,23 @@ public class ShopRepositoryCustom {
      */
     private List<ShopResponseDto> getShopList(PageRequestDto pageRequestDto, String keyword) {
         return jpaQueryFactory
-            .select(Projections.constructor(ShopResponseDto.class,
-                Expressions.stringTemplate("CAST({0} AS string)", shop.id),
-                shop.name,
-                shop.description,
-                shop.tel,
-                shop.address,
-                shop.detailAddress,
-                GroupBy.list(shopImage.imageUrl)
-            ))
             .from(shop)
             .leftJoin(shopImage).on(shop.id.eq(shopImage.shop.id))
             .where(getWhereConditions(keyword))
             .offset(pageRequestDto.getFirstIndex())
             .limit(pageRequestDto.getSize())
             .orderBy(getOrderConditions(pageRequestDto))
-            .fetch();
+            .transform(groupBy(shop.id).list(
+                Projections.constructor(ShopResponseDto.class,
+                    Expressions.stringTemplate("CAST({0} AS string)", shop.id),
+                    shop.name,
+                    shop.description,
+                    shop.tel,
+                    shop.address,
+                    shop.detailAddress,
+                    list(shopImage.imageUrl)
+                )
+            ));
     }
 
     /**

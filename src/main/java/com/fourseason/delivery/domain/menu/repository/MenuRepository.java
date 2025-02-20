@@ -10,5 +10,5 @@ import java.util.Optional;
 
 public interface MenuRepository extends JpaRepository<Menu, UUID> {
     Optional<Menu> findByIdAndDeletedAtIsNull(UUID id);
-    List<Menu> findByIdIn(List<UUID> menuIds);
+    List<Menu> findByIdInAndDeletedAtIsNull(List<UUID> menuIds);
 }
