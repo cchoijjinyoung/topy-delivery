@@ -1,6 +1,5 @@
 package com.fourseason.delivery.domain.review.repository;
 
-import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.review.entity.Review;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import org.springframework.data.jpa.repository.JpaRepository;
