@@ -40,7 +40,7 @@ public record OrderSummaryResponseDto(
         order.getAddress(),
         order.getTotalPrice(),
         order.getOrderStatus(),
-        order.getOrderMenuList().stream().map(MenuDto::of).collect(toList()),
+        order.getOrderMenuList().stream().map(MenuDto::of).toList(),
         order.getCreatedAt(),
         order.getUpdatedAt(),
         order.getUpdatedBy()
