@@ -34,6 +34,7 @@ public class AuthService {
     public TokenDto signIn(SignInRequestDto request) {
         Member member = memberRepository.findByUsername(request.username())
                 .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
+
         if (!passwordEncoder.matches(request.password(), member.getPassword())) {
             throw new CustomException(MEMBER_INVALID_CREDENTIAL);
         }
@@ -45,9 +46,9 @@ public class AuthService {
     }
 
     private void validateDuplicateEmail(String email) {
-        memberRepository.findByEmail(email)
-                .ifPresent(member-> {
-                    throw new CustomException(MEMBER_DUPLICATE_EMAIL);
-                });
+        // 단순 존재여부 확인은 exists 를 활용 하는 것이 더 낫다.
+        if (memberRepository.existsByEmail(email)) {
+            throw new CustomException(MEMBER_DUPLICATE_EMAIL);
+        }
     }
 }
