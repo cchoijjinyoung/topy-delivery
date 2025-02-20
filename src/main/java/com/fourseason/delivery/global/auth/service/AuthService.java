@@ -1,7 +1,6 @@
 package com.fourseason.delivery.global.auth.service;
 
 import com.fourseason.delivery.domain.member.entity.Member;
-import com.fourseason.delivery.domain.member.entity.Role;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.global.auth.JwtUtil;
 import com.fourseason.delivery.global.auth.dto.TokenDto;
