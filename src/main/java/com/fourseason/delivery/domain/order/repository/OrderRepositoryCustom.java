@@ -2,10 +2,10 @@ package com.fourseason.delivery.domain.order.repository;
 
 import static com.fourseason.delivery.domain.order.entity.QOrder.order;
 
-import com.fourseason.delivery.domain.menu.exception.MenuErrorCode;
 import com.fourseason.delivery.domain.order.dto.response.OrderSummaryResponseDto;
 import com.fourseason.delivery.domain.order.dto.response.QOrderSummaryResponseDto;
 import com.fourseason.delivery.domain.order.entity.QOrder;
+import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
@@ -82,7 +82,7 @@ public class OrderRepositoryCustom {
     return switch (order) {
       case "latest" -> QOrder.order.createdAt.desc();
       case "earliest" -> QOrder.order.createdAt.asc();
-      default -> throw new CustomException(MenuErrorCode.ORDER_BY_NOT_FOUND);
+      default -> throw new CustomException(OrderErrorCode.ORDER_BY_NOT_FOUND);
     };
   }
 }
