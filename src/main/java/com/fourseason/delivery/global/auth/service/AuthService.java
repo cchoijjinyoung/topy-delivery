@@ -12,11 +12,8 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 import static com.fourseason.delivery.domain.member.exception.MemberErrorCode.*;
 import static com.fourseason.delivery.global.auth.exception.AuthErrorCode.ACCESS_TOKEN_NOT_AVAILABLE;

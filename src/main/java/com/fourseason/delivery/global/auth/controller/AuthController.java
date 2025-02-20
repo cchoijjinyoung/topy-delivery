@@ -2,11 +2,10 @@ package com.fourseason.delivery.global.auth.controller;
 
 import com.fourseason.delivery.domain.member.entity.Role;
 import com.fourseason.delivery.global.auth.CustomPrincipal;
+import com.fourseason.delivery.global.auth.dto.TokenDto;
 import com.fourseason.delivery.global.auth.dto.request.SignInRequestDto;
 import com.fourseason.delivery.global.auth.dto.request.SignUpRequestDto;
-import com.fourseason.delivery.global.auth.dto.TokenDto;
 import com.fourseason.delivery.global.auth.service.AuthService;
-import com.fourseason.delivery.global.exception.CustomException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.util.Map;
-
-import static com.fourseason.delivery.global.auth.exception.AuthErrorCode.ACCESS_TOKEN_NOT_FOUND;
 
 @Slf4j
 @RestController
