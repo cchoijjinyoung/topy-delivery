@@ -49,7 +49,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             log.info(claims.toString());
 
             CustomPrincipal principal = new CustomPrincipal(claims.get("id", Long.class),
-                    claims.get("username", String.class));
+                    claims.getSubject());
 
             // 토큰 검증을 통해 가져온 claims 으로 Authentication 객체 생성
             UsernamePasswordAuthenticationToken authentication =

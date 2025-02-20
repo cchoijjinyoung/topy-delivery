@@ -29,7 +29,10 @@ public class AuthController {
             @RequestBody @Valid SignUpRequestDto request
     ) {
         authService.signUp(request);
-        URI location = UriComponentsBuilder.newInstance().path("/api/sign-in").build().toUri();
+        URI location = UriComponentsBuilder.newInstance()
+                .path("/api/sign-in")
+                .build()
+                .toUri();
         return ResponseEntity.created(location).build();
     }
 
