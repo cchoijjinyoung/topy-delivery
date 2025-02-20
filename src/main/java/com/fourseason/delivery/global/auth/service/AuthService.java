@@ -3,9 +3,9 @@ package com.fourseason.delivery.global.auth.service;
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.global.auth.JwtUtil;
+import com.fourseason.delivery.global.auth.dto.TokenDto;
 import com.fourseason.delivery.global.auth.dto.request.SignInRequestDto;
 import com.fourseason.delivery.global.auth.dto.request.SignUpRequestDto;
-import com.fourseason.delivery.global.auth.dto.TokenDto;
 import com.fourseason.delivery.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +43,7 @@ public class AuthService {
         }
 
         // 토큰 생성
-        String accessToken = jwtUtil.createAccessToken(member.getId(), member.getUsername(), member.getRole());
+        String accessToken = jwtUtil.createAccessToken(member.getUsername(), member.getRole(), member.getId());
         String refreshToken = jwtUtil.createRefreshToken(member.getUsername());
         return new TokenDto(accessToken, refreshToken);
     }

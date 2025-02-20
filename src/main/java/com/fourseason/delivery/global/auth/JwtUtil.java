@@ -39,23 +39,25 @@ public class JwtUtil {
         this.refreshExpiration = refreshExpiration;
     }
 
-    public String createAccessToken(Long id, String username, Role role) {
+    public String createAccessToken(String username, Role role, Long id) {
         Map<String, Object> claims = Map.of(
-                "id", id,
-                "username", username,
-                "role", role);
-        return generateToken(claims, Duration.ofMinutes(accessExpiration));
+                "role", role,
+                "id", id);
+
+        return generateToken(Duration.ofMinutes(accessExpiration), username, claims);
     }
 
     public String createRefreshToken(String username) {
-        return generateToken(Map.of("username", username), Duration.ofDays(refreshExpiration));
+
+        return generateToken(Duration.ofDays(refreshExpiration), username, null);
     }
 
     // 토큰 생성
-    private String generateToken(Map<String, Object> claims, Duration expiration) {
-        // aws 의 리전이 어디에 생길지 모르니 타임 존을 명확하게 ..
+    private String generateToken(Duration expiration, String username, Map<String, Object> claims) {
+        // aws 의 리전이 어디에 생길지 모르니 타임 존을 명확하게 ...
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
         return Jwts.builder()
+                .subject(username)
                 .claims(claims)
                 .issuer(issuer)
                 .issuedAt(Date.from(now.toInstant()))
