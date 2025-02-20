@@ -33,4 +33,7 @@ public class ReviewImage extends BaseTimeEntity {
         return reviewImage;
     }
 
+    public void deleteOf(String deletedBy) {
+        super.deleteOf(deletedBy);
+    }
 }
