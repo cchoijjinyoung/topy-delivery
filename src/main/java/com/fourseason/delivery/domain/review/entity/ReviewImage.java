@@ -39,7 +39,7 @@ public class ReviewImage extends BaseTimeEntity {
     private Review review;
 
     @Builder
-    public ReviewImage(String imageUrl, String originalFileName, long fileSize, String s3Folder, Review review) {
+    private ReviewImage(String imageUrl, String originalFileName, long fileSize, String s3Folder, Review review) {
         this.imageUrl = imageUrl;
         this.originalFileName = originalFileName;
         this.fileSize = fileSize;
