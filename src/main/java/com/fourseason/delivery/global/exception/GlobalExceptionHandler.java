@@ -1,5 +1,6 @@
 package com.fourseason.delivery.global.exception;
 
+import com.fourseason.delivery.domain.payment.exception.CustomRestClientException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -52,6 +53,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.ok(ErrorResponseEntity.builder()
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .message("권한이 없습니다.")
+                .build());
+    }
+
+    /**
+     * Handel CustomRestClientException
+     */
+    @ExceptionHandler(CustomRestClientException.class)
+    public ResponseEntity<ErrorResponseEntity> handleCustomRestClientException(CustomRestClientException e) {
+        return ResponseEntity.status(e.getStatusCode())
+                .body(ErrorResponseEntity.builder()
+                .status(e.getStatusCode().value())
+                .message(e.getMessage())
                 .build());
     }
 }

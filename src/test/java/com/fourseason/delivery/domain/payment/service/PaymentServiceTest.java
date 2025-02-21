@@ -1,6 +1,5 @@
 package com.fourseason.delivery.domain.payment.service;
 
-package com.fourseason.delivery.domain.payment.service;
 
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.entity.Role;

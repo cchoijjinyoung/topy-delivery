@@ -47,20 +47,50 @@ public class PaymentService {
     /**
      * 결제 생성
      */
-    @Transactional
-    public URI registerPayment(final CreatePaymentRequestDto createPaymentRequestDto, final Member member) {
-        // Todo: 임시 order 객체 생성 실제로는 order객체 조회, 확인 필요
-        Order order = Order.builder().build();
-        // Todo: pb사에 결제 승인처리, 결제 성공확인, 받은 객체에서 status 값 적용, 현재는 임시로 "DONE" 사용
-        Payment newPayment = Payment.addOf(createPaymentRequestDto, "DONE", order, member);
-        paymentRepository.save(newPayment);
 
-        return ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(newPayment.getId())
-                .toUri();
+    /**
+     * Todo:
+     * payment객체 생성(결제 요청 과정) 기존에는 client쪽에서 전부 일임하여 진행하는 부분
+     * 0. 테스트 html코드를 적용해보기 위해서 혹시 추가적인 dependency가 필요하려나?
+     * 1. orderId를 담은 client의 결제 요청페이지 location 전달(임시로 html로 만들어진 주소로 orderId값만 받아서)
+     *      (상세하게 할 경우 order객체를 보내서 id, 결제명, 금액까지)
+     * 2. client에서 테스트 결제 요청진행 이후 받은 payment 객체로 그 결제 승인을 다시 server의 요청을 보냄(주소만 적절히 수정해 주면 될것 같음)
+     */
+
+    /**
+     * payment 요청을 위한 order값 전달
+     */
+    public URI checkoutPayment(UUID orderId) {
+        // 원래는 orderId로 order 조회후 값을 넣는다
+        URI location = URI.create("/static/checkout?orderId="+ orderId + "&amount=" + 20000);
+        return location;
     }
+
+
+    /**
+     * 결제 승인 과정
+     * 1. 현재 order가 존재하는지 확인
+     * 2. 확인된 orderId를 담아서 결제 승인처리 (paymentRestService 참조)
+     * 3. 성공 or 실패 처리에 맞게 결제 정보 db에 저장
+     * 4. response로 돌려줌
+     *
+     */
+//    @Transactional
+//    public URI registerPayment(final CreatePaymentRequestDto createPaymentRequestDto, final Member member) {
+//
+//        // Todo: 임시 order 객체 생성 실제로는 order객체 조회, 확인 필요
+//        Order order = Order.builder().build();
+//        // Todo: pb사에 결제 승인처리, 결제 성공확인, 받은 객체에서 status 값 적용, 현재는 임시로 "DONE" 사용
+//        //
+//        Payment newPayment = Payment.addOf(createPaymentRequestDto, "DONE", order, member);
+//        paymentRepository.save(newPayment);
+//
+//        return ServletUriComponentsBuilder
+//                .fromCurrentRequest()
+//                .path("/{id}")
+//                .buildAndExpand(newPayment.getId())
+//                .toUri();
+//    }
 
     /**
      * 결제 취소

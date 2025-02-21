@@ -58,18 +58,18 @@ public class Payment extends BaseTimeEntity {
         this.member = member;
     }
 
-    public static Payment addOf(final CreatePaymentRequestDto dto, final String paymentStatus, final Order order, final Member member) {
-        return Payment.builder()
-                .paymentKey(dto.paymentKey())
-                .paymentAmount(dto.amount())
-                .paymentMethod(dto.paymentMethod())
-                // Todo: 결제 승인 DONE, 결제 취소 CANCELED, 결제 실패 ABORTED, EXPIRED
-                // 외부 api 서비스를 통해 값을 받다보니 변동성이 있어 string으로 사용
-                .paymentStatus(paymentStatus)
-                .order(order)
-                .member(member)
-                .build();
-    }
+//    public static Payment addOf(final CreatePaymentRequestDto dto, final String paymentStatus, final Order order, final Member member) {
+//        return Payment.builder()
+//                .paymentKey(dto.paymentKey())
+//                .paymentAmount(dto.amount())
+//                .paymentMethod(dto.paymentMethod())
+//                // Todo: 결제 승인 DONE, 결제 취소 CANCELED, 결제 실패 ABORTED, EXPIRED
+//                // 외부 api 서비스를 통해 값을 받다보니 변동성이 있어 string으로 사용
+//                .paymentStatus(paymentStatus)
+//                .order(order)
+//                .member(member)
+//                .build();
+//    }
 
     //updateOf cancelOf 고민
     public void cancelOf(final String paymentStatus) {

@@ -8,7 +8,7 @@ public record PaymentResponseDto(
 
         String paymentKey,
 
-        int paymentAmount,
+        int amount,
 
         String paymentMethod,
 
@@ -18,7 +18,7 @@ public record PaymentResponseDto(
     public static PaymentResponseDto of(Payment payment) {
         return PaymentResponseDto.builder()
                 .paymentKey(payment.getPaymentKey())
-                .paymentAmount(payment.getPaymentAmount())
+                .amount(payment.getPaymentAmount())
                 .paymentMethod(payment.getPaymentMethod())
                 .paymentStatus(payment.getPaymentStatus())
                 .build();
