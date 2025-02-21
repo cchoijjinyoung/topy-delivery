@@ -34,7 +34,7 @@ public class Address extends BaseTimeEntity {
 
     @Builder
     public Address(String address, String detailAddress, Member member) {
-        this.address = detailAddress;
+        this.address = address;
         this.detailAddress = detailAddress;
         this.member = member;
     }
