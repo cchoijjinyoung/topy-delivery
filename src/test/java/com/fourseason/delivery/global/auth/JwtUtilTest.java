@@ -8,7 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class JwtUtilTest {
 
@@ -18,36 +19,27 @@ class JwtUtilTest {
 
     @BeforeEach
     void setUp() {
-        String secret = "7Iqk7YyM66W07YOA7L2U65Sp7YG065+9U3ByaW5n6rCV7J2Y7Yqc7YSw7LWc7JuQ67mI7J6F64uI64ukLg==";
-        String issuer = "s1jin-delivery";
+
+        String secret = "secret1234567890123456789012345678901234567890";
+        String issuer = "project1";
         Long accessExpiration = 30 * 60L;
-        Long refreshExpiration = 1000 * 60 * 60L;
+        Long refreshExpiration = 7L;
         jwtUtil = new JwtUtil(secret, issuer, accessExpiration, refreshExpiration);
     }
 
     @Test
     @DisplayName("토큰 생성 확인")
     void createToken() {
-        String token = jwtUtil.createAccessToken("testUser", Role.CUSTOMER);
+        String token = jwtUtil.createAccessToken("testUser", Role.CUSTOMER, 1L);
 
         log.info(token);
         assertNotNull(token);
-        assertTrue(token.startsWith("Bearer "));
-    }
-
-    @Test
-    @DisplayName("생성된 토큰 검증")
-    void validateToken() {
-        String token = jwtUtil.createAccessToken("testUser", Role.CUSTOMER);
-        token = token.replace("Bearer ", "");
-
-//        assertTrue(jwtUtil.validateToken(token));
     }
 
     @Test
     @DisplayName("access 토큰 값 검증")
     void testGetMemberInfoFromAccessToken() {
-        String token = jwtUtil.createAccessToken("testUser", Role.CUSTOMER);
+        String token = jwtUtil.createAccessToken("testUser", Role.CUSTOMER, 3L);
 
         Claims claims = jwtUtil.validateToken(token);
 
@@ -55,19 +47,20 @@ class JwtUtilTest {
 
         assertNotNull(claims);
         assertEquals("testUser", claims.getSubject());
-        assertEquals("CUSTOMER", claims.get("role").toString());
+        assertEquals(3L, claims.get("id", Long.class));
+        assertEquals(Role.CUSTOMER.toString(), claims.get("role", String.class));
     }
 
     @Test
     @DisplayName("refresh 토큰 값 검증")
     void testGetMemberInfoFromRefreshToken() {
-        String token = jwtUtil.createRefreshToken("testUser");
+        String token = jwtUtil.createRefreshToken(5L);
 
         Claims claims = jwtUtil.validateToken(token);
 
         log.info("refresh 클레임 확인: {}", claims.toString());
 
         assertNotNull(claims);
-        assertEquals("testUser", claims.getSubject());
+        assertEquals(5L, claims.get("id", Long.class));
     }
 }

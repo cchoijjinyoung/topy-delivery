@@ -1,4 +1,4 @@
-package com.fourseason.delivery.global.auth.dto;
+package com.fourseason.delivery.global.auth.dto.request;
 
 public record SignInRequestDto(
         String username,

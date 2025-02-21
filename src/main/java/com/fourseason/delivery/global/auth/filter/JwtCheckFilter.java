@@ -4,6 +4,8 @@ import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.auth.JwtUtil;
 import com.fourseason.delivery.global.exception.CustomException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,9 +20,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
-import static com.fourseason.delivery.global.auth.exception.AuthErrorCode.ACCESS_TOKEN_NOT_AVAILABLE;
-import static com.fourseason.delivery.global.auth.exception.AuthErrorCode.ACCESS_TOKEN_NOT_FOUND;
+import static com.fourseason.delivery.global.auth.exception.AuthErrorCode.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -28,11 +30,17 @@ public class JwtCheckFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
 
+    // 지정한 경로로 시작되는 요청은 모두 제외 됨. 패턴은 적용안 됨.
+    private static final List<String> EXCLUDED_PATHS = List.of(
+            "/api/sign",
+            "/api/api-docs",
+            "/webjars"
+    );
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        System.out.println(path);
-        return path.startsWith("/api") || path.startsWith("/page") || path.startsWith("/css");
+        String path = request.getRequestURI();
+        return EXCLUDED_PATHS.stream().anyMatch(path::startsWith);
     }
 
     @Override
@@ -48,23 +56,28 @@ public class JwtCheckFilter extends OncePerRequestFilter {
         try {
 
             Claims claims = jwtUtil.validateToken(accessToken);
+//            log.info(claims.toString());
 
-            log.info(claims.toString());
+            CustomPrincipal principal = new CustomPrincipal(claims.get("id", Long.class),
+                    claims.getSubject());
 
             // 토큰 검증을 통해 가져온 claims 으로 Authentication 객체 생성
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            new CustomPrincipal(claims.getSubject()),
+                            principal,
                             null,
                             Collections.singletonList(
                                     new SimpleGrantedAuthority("ROLE_" + claims.get("role").toString())
                             )
                     );
-
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
 
-        } catch (Exception e) {
+        } catch (ExpiredJwtException e) {
+            log.error(e.getMessage());
+            throw new CustomException(ACCESS_TOKEN_EXPIRED);
+        } catch (JwtException e) {
+            log.error(e.getMessage());
             throw new CustomException(ACCESS_TOKEN_NOT_AVAILABLE);
         }
     }
@@ -76,7 +89,6 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             return bearerToken.substring(7);
         } else {
             // Access Token 이 없거나 prefix 가 Bearer 가 아닌 경우
-            log.info("ACCESS_TOKEN_NOT_FOUND: {}", bearerToken);
             throw new CustomException(ACCESS_TOKEN_NOT_FOUND);
         }
     }
