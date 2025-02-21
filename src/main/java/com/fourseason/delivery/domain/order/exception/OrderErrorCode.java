@@ -12,6 +12,8 @@ public enum OrderErrorCode implements ErrorCode {
   NOT_PENDING_ORDER(HttpStatus.BAD_REQUEST, "보류 중인 주문이 아닙니다."),
   NOT_ORDERED_BY_CUSTOMER(HttpStatus.BAD_REQUEST, "해당 주문을 요청한 고객이 아닙니다."),
   ORDER_BY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 정렬을 찾을 수 없습니다."),
+  ALREADY_CANCELED_ORDER(HttpStatus.BAD_REQUEST, "이미 취소된 주문입니다."),
+  ORDER_CANCEL_EXPIRED(HttpStatus.BAD_REQUEST, "주문 취소 기간이 만료되었습니다."),
 
   // TODO: 각 도메인 ErrorCode 로 옮기기,
   MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회원을 찾을 수 없습니다."),

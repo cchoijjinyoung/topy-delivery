@@ -1,12 +1,15 @@
 package com.fourseason.delivery.domain.order.entity;
 
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.ACCEPTED;
-import static com.fourseason.delivery.domain.order.entity.OrderStatus.PENDING;
 import static com.fourseason.delivery.domain.order.entity.OrderType.OFFLINE;
+import static com.fourseason.delivery.domain.order.entity.OrderStatus.CANCELED;
+import static com.fourseason.delivery.domain.order.entity.OrderStatus.PENDING;
 import static com.fourseason.delivery.domain.order.entity.OrderType.ONLINE;
+import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ALREADY_CANCELED_ORDER;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_ORDERED_BY_CUSTOMER;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_PENDING_ORDER;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_SHOP_OWNER;
+import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ORDER_CANCEL_EXPIRED;
 import static jakarta.persistence.CascadeType.PERSIST;
 import static jakarta.persistence.FetchType.LAZY;
 
@@ -24,6 +27,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -142,6 +146,16 @@ public class Order extends BaseTimeEntity {
   public void assertOrderedBy(Long customerId) {
     if (!this.getMember().getId().equals(customerId)) {
       throw new CustomException(NOT_ORDERED_BY_CUSTOMER);
+    }
+  }
+
+  public void assertOrderCancelAllowed() {
+    if (this.orderStatus == CANCELED) {
+      throw new CustomException(ALREADY_CANCELED_ORDER);
+    }
+
+    if (LocalDateTime.now().isAfter(this.getCreatedAt().plusMinutes(5))) {
+      throw new CustomException(ORDER_CANCEL_EXPIRED);
     }
   }
 }

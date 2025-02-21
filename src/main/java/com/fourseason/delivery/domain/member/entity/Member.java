@@ -1,7 +1,7 @@
 package com.fourseason.delivery.domain.member.entity;
 
+import com.fourseason.delivery.global.auth.dto.request.SignUpRequestDto;
 import com.fourseason.delivery.domain.member.dto.request.MemberRequestDto;
-import com.fourseason.delivery.global.auth.dto.SignUpRequestDto;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -31,6 +31,7 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false)
     private String phoneNumber;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 

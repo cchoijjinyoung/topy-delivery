@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -63,5 +64,29 @@ public class OrderCustomerController {
       @RequestParam(defaultValue = "latest") String orderBy) {
     PageRequestDto pageRequestDto = PageRequestDto.of(page - 1, size, orderBy);
     return ResponseEntity.ok(orderCustomerService.getOrderList(memberId, pageRequestDto));
+  }
+
+  /**
+   * 고객 주문 취소 API role: CUSTOMER
+   */
+  @PostMapping("/{orderId}/cancel")
+  public ResponseEntity<Void> cancelOrder(
+      @PathVariable UUID orderId,
+      @RequestParam Long memberId
+  ) {
+    orderCustomerService.cancelOrder(orderId, memberId);
+    return ResponseEntity.ok().build();
+  }
+
+  /**
+   * 고객 주문 삭제 API role: CUSTOMER
+   */
+  @DeleteMapping("/{orderId}")
+  public ResponseEntity<Void> deleteOrder(
+      @PathVariable UUID orderId,
+      @RequestParam Long memberId
+  ) {
+    orderCustomerService.deleteOrder(orderId, memberId);
+    return ResponseEntity.ok().build();
   }
 }

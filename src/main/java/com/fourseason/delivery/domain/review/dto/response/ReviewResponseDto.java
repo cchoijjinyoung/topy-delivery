@@ -3,7 +3,6 @@ package com.fourseason.delivery.domain.review.dto.response;
 import com.fourseason.delivery.domain.review.entity.Review;
 import com.fourseason.delivery.domain.review.entity.ReviewImage;
 import lombok.Builder;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
