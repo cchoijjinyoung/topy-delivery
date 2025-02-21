@@ -5,9 +5,11 @@ import com.fourseason.delivery.domain.member.dto.request.AddressUpdateRequestDto
 import com.fourseason.delivery.domain.member.dto.response.AddressAddResponseDto;
 import com.fourseason.delivery.domain.member.dto.response.AddressUpdateResponseDto;
 import com.fourseason.delivery.domain.member.service.AddressService;
+import com.fourseason.delivery.global.auth.CustomPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,8 +26,8 @@ public class AddressController {
      * 주소 목록 조회
      */
     @GetMapping
-    public ResponseEntity<List<AddressAddResponseDto>> getAddressList() {
-        return ResponseEntity.ok(addressService.getAddressList());
+    public ResponseEntity<List<AddressAddResponseDto>> getAddressList(@AuthenticationPrincipal CustomPrincipal principal) {
+        return ResponseEntity.ok(addressService.getAddressList(principal.getId()));
     }
 
 
@@ -33,8 +35,9 @@ public class AddressController {
      * 주소 추가
      */
     @PostMapping
-    public ResponseEntity<AddressAddResponseDto> addAddress(@Valid @RequestBody AddressAddRequestDto addressAddRequestDto) {
-        return ResponseEntity.ok(addressService.addAddress(addressAddRequestDto));
+    public ResponseEntity<AddressAddResponseDto> addAddress(@AuthenticationPrincipal CustomPrincipal principal,
+                                                            @Valid @RequestBody AddressAddRequestDto addressAddRequestDto) {
+        return ResponseEntity.ok(addressService.addAddress(principal.getId(), addressAddRequestDto));
     }
 
 
@@ -42,9 +45,10 @@ public class AddressController {
      * 주소 수정
      */
     @PutMapping("/{address_id}")
-    public ResponseEntity<AddressUpdateResponseDto> updateAddress(@PathVariable UUID addressId,
+    public ResponseEntity<AddressUpdateResponseDto> updateAddress(@AuthenticationPrincipal CustomPrincipal principal,
+                                                                  @PathVariable UUID addressId,
                                                                   @Valid @RequestBody AddressUpdateRequestDto addressUpdateRequestDto) {
-        return ResponseEntity.ok(addressService.updateAddress(addressId, addressUpdateRequestDto));
+        return ResponseEntity.ok(addressService.updateAddress(principal.getId(), addressId, addressUpdateRequestDto));
     }
 
 
@@ -52,8 +56,9 @@ public class AddressController {
      * 주소 삭제
      */
     @DeleteMapping("/{address_id}")
-    public ResponseEntity<Void> deleteAddress(@PathVariable UUID addressId) {
-        addressService.deleteAddress(addressId);
+    public ResponseEntity<Void> deleteAddress(@AuthenticationPrincipal CustomPrincipal principal,
+                                              @PathVariable UUID addressId) {
+        addressService.deleteAddress(principal.getId(), addressId);
         return ResponseEntity.ok().build();
     }
 }
