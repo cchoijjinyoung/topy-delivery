@@ -40,6 +40,12 @@ jwt:
   refresh-expiration: 7 # Refresh Token: day
   secret: ${JWT_SECRET}
 
-
 file:
   image-extension: jpg, jpeg, png, gif
+
+springdoc:
+  swagger-ui:
+    path: /api/api-docs
+    groups-order: DESC
+  paths-to-match:
+    - /api/**
