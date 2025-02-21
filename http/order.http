@@ -18,14 +18,19 @@ Content-Type: application/json
 }
 
 ### 고객 주문 상세 조회
-GET http://localhost:8080/api/customer/orders/adb6b9a4-77e5-4e77-a22f-61cd0f7a7f39?memberId=5
+GET http://localhost:8080/api/customer/orders/eb638b55-89d9-42de-9a6d-2426c6c31355?memberId=5
 
 ### 고객 주문 리스트 조회
 GET http://localhost:8080/api/customer/orders?memberId=5&page=1&size=20&orderBy=latest
 
+### 고객 주문 취소
+POST http://localhost:8080/api/customer/orders/eb638b55-89d9-42de-9a6d-2426c6c31355/cancel?memberId=5
+
+### 고객 주문 내역 삭제
+DELETE http://localhost:8080/api/customer/orders/ff7c17be-c6dd-4841-9984-7989878ed842?memberId=5
+
 ### 점주 주문 수락
 POST http://localhost:8080/api/owner/orders/adb6b9a4-77e5-4e77-a22f-61cd0f7a7f39/accept?memberId=3
-Content-Type: application/json
 
 ### 점주 주문 상세 조회
 GET http://localhost:8080/api/owner/orders/adb6b9a4-77e5-4e77-a22f-61cd0f7a7f39?memberId=3
