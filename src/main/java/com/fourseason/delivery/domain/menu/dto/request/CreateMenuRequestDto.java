@@ -3,6 +3,9 @@ package com.fourseason.delivery.domain.menu.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 public record CreateMenuRequestDto(
         @NotBlank(message = "메뉴 이름은 필수 입력 값입니다.")
