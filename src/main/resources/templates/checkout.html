@@ -43,9 +43,19 @@
         const urlParams = new URLSearchParams(window.location.search);
         console.log(urlParams.get("amount"));
         console.log(urlParams.get("orderId"));
+
+
+        // // 서버에 GET 요청을 보내고 데이터를 가져옵니다.
+        // const response = await fetch(`localhost/api/customer/orders/${urlParams.get("orderId")}`, {
+        //   method: 'GET',
+        // });
+        // const json = await response.json(); // 서버로부터 받아온 데이터를 JSON 형식으로 변환
+
+
         const amount = {
           currency: "KRW",
           value: Number(urlParams.get("amount")),
+          // value: json.totalPrice,
         };
         // ------  결제위젯 초기화 ------
         // TODO: clientKey는 개발자센터의 결제위젯 연동 키 > 클라이언트 키로 바꾸세요.
@@ -106,6 +116,9 @@
           await widgets.requestPayment({
             orderId: urlParams.get("orderId"),
             orderName: "빅맥 라지세트 외 2건",
+            // orderName: json.menuList.length === 1
+            //         ? json.menuList[0]
+            //         : json.menuList[0] + " 외 " + (json.menuList.length - 1) + "건",
             successUrl: window.location.origin + "/page/success",
             failUrl: window.location.origin + "/page/fail",
             customerEmail: "customer123@gmail.com",
