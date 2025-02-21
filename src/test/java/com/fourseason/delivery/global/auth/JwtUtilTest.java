@@ -54,13 +54,13 @@ class JwtUtilTest {
     @Test
     @DisplayName("refresh 토큰 값 검증")
     void testGetMemberInfoFromRefreshToken() {
-        String token = jwtUtil.createRefreshToken("testUser");
+        String token = jwtUtil.createRefreshToken(5L);
 
         Claims claims = jwtUtil.validateToken(token);
 
         log.info("refresh 클레임 확인: {}", claims.toString());
 
         assertNotNull(claims);
-        assertEquals("testUser", claims.getSubject());
+        assertEquals(5L, claims.get("id", Long.class));
     }
 }

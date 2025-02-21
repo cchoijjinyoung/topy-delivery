@@ -50,7 +50,7 @@ public class Member extends BaseTimeEntity {
                 .email(request.email())
                 .password(password)
                 .phoneNumber(request.phoneNumber())
-                .role(Role.CUSTOMER)
+                .role(Role.of(request.role()))
                 .build();
     }
 

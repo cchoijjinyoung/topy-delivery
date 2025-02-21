@@ -47,9 +47,9 @@ public class JwtUtil {
         return generateToken(Duration.ofMinutes(accessExpiration), username, claims);
     }
 
-    public String createRefreshToken(String username) {
+    public String createRefreshToken(Long id) {
 
-        return generateToken(Duration.ofDays(refreshExpiration), username, null);
+        return generateToken(Duration.ofDays(refreshExpiration), null, Map.of("id", id));
     }
 
     // 토큰 생성
