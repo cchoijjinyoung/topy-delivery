@@ -45,7 +45,7 @@ public class Payment extends BaseTimeEntity {
     private Member member;
 
     @Builder
-    public Payment(final String paymentKey,
+    private Payment(final String paymentKey,
                    final int paymentAmount,
                    final String paymentMethod,
                    final String paymentStatus,
@@ -59,9 +59,6 @@ public class Payment extends BaseTimeEntity {
         this.member = member;
     }
 
-    /**
-     * TODO: requestDto에서 만들것이 아니라 결제결과에서 오는 payment객체를 받아서 결제 정보를 생성하는쪽이 좋을것 같다.
-     */
     public static Payment addOf(final ExternalPaymentDto dto, final Order order, final Member member) {
         return Payment.builder()
                 .paymentKey(dto.paymentKey())

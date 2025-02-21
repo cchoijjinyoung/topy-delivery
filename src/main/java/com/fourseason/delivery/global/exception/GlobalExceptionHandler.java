@@ -8,7 +8,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -60,11 +59,8 @@ public class GlobalExceptionHandler {
      * Handel CustomRestClientException
      */
     @ExceptionHandler(CustomRestClientException.class)
-    public ResponseEntity<ErrorResponseEntity> handleCustomRestClientException(CustomRestClientException e) {
+    public ResponseEntity<String> handleCustomRestClientException(CustomRestClientException e) {
         return ResponseEntity.status(e.getStatusCode())
-                .body(ErrorResponseEntity.builder()
-                .status(e.getStatusCode().value())
-                .message(e.getMessage())
-                .build());
+                .body(e.getMessage());
     }
 }

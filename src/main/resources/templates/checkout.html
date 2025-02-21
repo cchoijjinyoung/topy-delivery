@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="https://static.toss.im/icons/png/4x/icon-toss-logo.png" />
-    <link rel="stylesheet" type="text/css" href="style.css" />
+    <link rel="stylesheet" type="text/css" href="/css/style.css" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>토스페이먼츠 샘플 프로젝트</title>
@@ -106,8 +106,8 @@
           await widgets.requestPayment({
             orderId: urlParams.get("orderId"),
             orderName: "빅맥 라지세트 외 2건",
-            successUrl: window.location.origin + "/success",
-            failUrl: window.location.origin + "/fail",
+            successUrl: window.location.origin + "/page/success",
+            failUrl: window.location.origin + "/page/fail",
             customerEmail: "customer123@gmail.com",
             customerName: "김토스",
             customerMobilePhone: "01012341234",

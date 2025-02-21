@@ -1,6 +1,10 @@
 package com.fourseason.delivery.domain.payment.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fourseason.delivery.domain.member.MemberErrorCode;
 import com.fourseason.delivery.domain.member.entity.Member;
+import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
@@ -28,39 +32,26 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentRepositoryCustom paymentRepositoryCustom;
     private final OrderRepository orderRepository;
+    private final MemberRepository memberRepository;
 
     /**
      * 사용자 결제 전체 조회
      */
     @Transactional(readOnly = true)
-    public PageResponseDto<PaymentResponseDto> findPaymentList(final PageRequestDto pageRequestDto, final Member member) {
+    public PageResponseDto<PaymentResponseDto> findPaymentList(final PageRequestDto pageRequestDto, final String username) {
 
-        return paymentRepositoryCustom.findPaymentListByMemberWithPage(pageRequestDto, member);
+        return paymentRepositoryCustom.findPaymentListByMemberWithPage(pageRequestDto, checkMember(username));
     }
 
     /**
      * 사용자 결제 상세 조회
      */
     @Transactional(readOnly = true)
-    public PaymentResponseDto getPayment(final UUID paymentId, final Member member) {
-        Payment payment = checkPayment(paymentId, member);
+    public PaymentResponseDto getPayment(final UUID paymentId, final String username) {
+        Payment payment = checkPayment(paymentId, checkMember(username));
 
         return PaymentResponseDto.of(payment);
     }
-
-    /**
-     * 결제 생성
-     */
-
-    /**
-     * Todo:
-     * payment객체 생성(결제 요청 과정) 기존에는 client쪽에서 전부 일임하여 진행하는 부분
-     * 0. 테스트 html코드를 적용해보기 위해서 혹시 추가적인 dependency가 필요하려나?
-     * 1. orderId를 담은 client의 결제 요청페이지 location 전달(임시로 html로 만들어진 주소로 orderId값만 받아서)
-     *      (상세하게 할 경우 order객체를 보내서 id, 결제명, 금액까지)
-     * 2. client에서 테스트 결제 요청진행 이후 받은 payment 객체로 그 결제 승인을 다시 server의 요청을 보냄(주소만 적절히 수정해 주면 될것 같음)
-     */
-
 
     /**
      * 결제 승인 과정
@@ -71,27 +62,33 @@ public class PaymentService {
      *
      */
     @Transactional
-    public URI registerPayment(final ExternalPaymentDto externalPaymentDto, final Member member) {
-        Order order = orderRepository.findById(externalPaymentDto.orderId())
-                .orElseThrow(() ->
-                    new CustomException(OrderErrorCode.ORDER_NOT_FOUND)
-                );
-        Payment payment = Payment.addOf(externalPaymentDto, order, member);
-        paymentRepository.save(payment);
+    public URI registerPayment(final String paymentResult) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            ExternalPaymentDto externalPaymentDto = objectMapper.readValue(paymentResult, ExternalPaymentDto.class);
+            Order order = orderRepository.findById(externalPaymentDto.orderId())
+                    .orElseThrow(() ->
+                            new CustomException(OrderErrorCode.ORDER_NOT_FOUND)
+                    );
+            Payment payment = Payment.addOf(externalPaymentDto, order, order.getMember());
+            paymentRepository.save(payment);
 
-        return ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(payment.getId())
-                .toUri();
+            return ServletUriComponentsBuilder
+                    .fromCurrentRequest()
+                    .path("/{id}")
+                    .buildAndExpand(payment.getId())
+                    .toUri();
+        } catch (JsonProcessingException e) {
+            throw new CustomException(PaymentErrorCode.PAYMENT_MAPPING_FAIL);
+        }
     }
 
     /**
-     * 결제 취소
+     * 결제 취소 추가 구현 필요
      */
     @Transactional
-    public URI cancelPayment(final UUID paymentId, final Member member) {
-        Payment payment = checkPayment(paymentId, member);
+    public URI cancelPayment(final UUID paymentId, final String username) {
+        Payment payment = checkPayment(paymentId, checkMember(username));
         // Todo: pb사에 결제 취소처리, 취소 성공확인, 받은 객체에서 status 값 적용, 현재는 임시로 "CANCELED" 사용
         payment.cancelOf("CANCELED");
 
@@ -105,10 +102,10 @@ public class PaymentService {
      * 결제 삭제
      */
     @Transactional
-    public void deletePayment(final UUID paymentId, final Member member) {
-        Payment payment = checkPayment(paymentId, member);
+    public void deletePayment(final UUID paymentId, final String username) {
+        Payment payment = checkPayment(paymentId, checkMember(username));
 
-        payment.deleteOf(member.getUsername());
+        payment.deleteOf(username);
     }
 
     /**
@@ -147,5 +144,11 @@ public class PaymentService {
 
         return paymentRepository.findByIdAndDeletedAtIsNotNull(paymentId)
                 .orElseThrow(() -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
+    }
+
+    private Member checkMember(final String username) {
+        Member member = memberRepository.findByUsernameAndDeletedAtIsNull(username)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
+        return member;
     }
 }

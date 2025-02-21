@@ -5,10 +5,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
+@RequestMapping("/page")
 public class PaymentHtmlController {
     /**
      * 인증성공처리
@@ -17,12 +16,12 @@ public class PaymentHtmlController {
      * @return
      * @throws Exception
      */
-    @RequestMapping(value = "/success", method = RequestMethod.GET)
+    @GetMapping("/success")
     public String paymentRequest(HttpServletRequest request, Model model) throws Exception {
         return "/success";
     }
 
-    @RequestMapping(value = "/checkout", method = RequestMethod.GET)
+    @GetMapping("/checkout")
     public String index(HttpServletRequest request, Model model) throws Exception {
         return "/checkout";
     }
@@ -34,7 +33,7 @@ public class PaymentHtmlController {
      * @return
      * @throws Exception
      */
-    @RequestMapping(value = "/fail", method = RequestMethod.GET)
+    @GetMapping("/fail")
     public String failPayment(HttpServletRequest request, Model model) throws Exception {
         String failCode = request.getParameter("code");
         String failMessage = request.getParameter("message");

@@ -31,10 +31,8 @@ public class JwtCheckFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return path.startsWith("/api")
-                || path.startsWith("/checkout") || path.startsWith("/style.css")
-                || path.startsWith("/success") || path.startsWith("/favicon.ico")
-                || path.startsWith("/fail");
+        System.out.println(path);
+        return path.startsWith("/api") || path.startsWith("/page") || path.startsWith("/css");
     }
 
     @Override
