@@ -1,5 +1,7 @@
 package com.fourseason.delivery.domain.review.service;
 
+import com.fourseason.delivery.domain.image.enums.S3Folder;
+import com.fourseason.delivery.domain.image.service.FileService;
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.entity.Role;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
@@ -24,7 +26,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,12 +35,12 @@ public class ReviewService {
     private final ReviewImageRepository reviewImageRepository;
     private final OrderRepository orderRepository;
     private final ShopRepository shopRepository;
-    private final MemberRepository memberRepository;
-    private final ReviewImageService imageUploadService;
+    private final ReviewImageService reviewImageService;
+
 
 
     @Transactional
-    public void createReview(UUID orderId, ReviewRequestDto reviewRequestDto) {
+    public void createReview(UUID orderId, ReviewRequestDto reviewRequestDto, List<MultipartFile> images) {
         // 1) Order 조회
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException(ReviewErrorCode.ORDER_NOT_FOUND));
@@ -54,11 +55,9 @@ public class ReviewService {
         reviewRepository.save(review);
 
         // 4) 이미지 업로드, ReviewImage 저장
-        if(reviewRequestDto.images() != null && !reviewRequestDto.images().isEmpty()) {
-            for(MultipartFile image : reviewRequestDto.images()) {
-                String imageUrl = imageUploadService.uploadImage(image);
-                ReviewImage reviewImage = ReviewImage.of(review, imageUrl);
-                reviewImageRepository.save(reviewImage);
+        if(images != null && !images.isEmpty()) {
+            for(MultipartFile image : images) {
+                reviewImageService.saveImageFile(S3Folder.REVIEW, image, review.getId());
             }
         }
     }
@@ -76,7 +75,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewResponseDto updateReview(UUID orderId, UUID reviewId, ReviewRequestDto reviewRequestDto) {
+    public ReviewResponseDto updateReview(UUID orderId, UUID reviewId, ReviewRequestDto reviewRequestDto, List<MultipartFile> images) {
         // 1) 리뷰 조회 및 리뷰 내용, 평점 업데이트
         Review review = reviewRepository.findByIdAndOrderIdAndDeletedAtIsNull(reviewId, orderId)
                 .orElseThrow(() -> new CustomException(ReviewErrorCode.REVIEW_NOT_FOUND));
@@ -96,17 +95,14 @@ public class ReviewService {
         }
 
         // 3) 새로운 이미지 추가
-        List<ReviewImage> images = new ArrayList<>();
-        if(reviewRequestDto.images() != null && !reviewRequestDto.images().isEmpty()) {
-            for(MultipartFile image : reviewRequestDto.images()) {
-                String imageUrl = imageUploadService.uploadImage(image);
-                ReviewImage reviewImage = ReviewImage.of(review, imageUrl);
-                images.add(reviewImage);
-                reviewImageRepository.save(reviewImage);
+        if(images != null && !images.isEmpty()) {
+            for(MultipartFile image : images) {
+                reviewImageService.saveImageFile(S3Folder.REVIEW, image, review.getId());
             }
         }
+        List<ReviewImage> newImages = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(reviewId);
 
-        return ReviewResponseDto.of(review, images);
+        return ReviewResponseDto.of(review, newImages);
     }
 
     @Transactional
