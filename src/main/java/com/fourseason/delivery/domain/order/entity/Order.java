@@ -1,5 +1,7 @@
 package com.fourseason.delivery.domain.order.entity;
 
+import static com.fourseason.delivery.domain.order.entity.OrderStatus.ACCEPTED;
+import static com.fourseason.delivery.domain.order.entity.OrderType.OFFLINE;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.CANCELED;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.PENDING;
 import static com.fourseason.delivery.domain.order.entity.OrderType.ONLINE;
@@ -48,7 +50,7 @@ public class Order extends BaseTimeEntity {
   private UUID id;
 
   @ManyToOne
-  @JoinColumn(name = "shop_id")
+  @JoinColumn(name = "shop_id", nullable = false)
   private Shop shop;
 
   @ManyToOne
@@ -102,6 +104,24 @@ public class Order extends BaseTimeEntity {
         .orderType(ONLINE)
         .address(dto.address())
         .instruction(dto.instruction())
+        .totalPrice(totalPrice)
+        .orderMenuList(orderMenuList)
+        .build();
+  }
+
+  public static Order addByOwner(
+      Shop shop,
+      String address,
+      String instruction,
+      List<OrderMenu> orderMenuList,
+      int totalPrice
+  ) {
+    return Order.builder()
+        .shop(shop)
+        .orderStatus(ACCEPTED)
+        .orderType(OFFLINE)
+        .address(address)
+        .instruction(instruction)
         .totalPrice(totalPrice)
         .orderMenuList(orderMenuList)
         .build();

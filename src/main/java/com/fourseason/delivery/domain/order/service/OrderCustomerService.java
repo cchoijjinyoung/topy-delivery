@@ -1,5 +1,6 @@
 package com.fourseason.delivery.domain.order.service;
 
+import static com.fourseason.delivery.domain.menu.entity.MenuStatus.SHOW;
 import static com.fourseason.delivery.domain.member.MemberErrorCode.MEMBER_NOT_FOUND;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.CANCELED;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.MENU_NOT_FOUND;
@@ -54,7 +55,8 @@ public class OrderCustomerService {
         .orElseThrow(() -> new CustomException(SHOP_NOT_FOUND));
 
     List<UUID> requestMenuIds = request.menuList().stream().map(MenuDto::menuId).toList();
-    List<Menu> menuList = menuRepository.findByIdInAndDeletedAtIsNull(requestMenuIds);
+    List<Menu> menuList = menuRepository.findByIdInAndMenuStatusAndShopAndDeletedAtIsNull(
+        requestMenuIds, SHOW, shop);
 
     if (requestMenuIds.size() != menuList.size()) {
       throw new CustomException(MENU_NOT_FOUND);

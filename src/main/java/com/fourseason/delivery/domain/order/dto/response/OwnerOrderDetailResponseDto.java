@@ -1,7 +1,5 @@
 package com.fourseason.delivery.domain.order.dto.response;
 
-import static java.util.stream.Collectors.toList;
-
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderMenu;
 import com.fourseason.delivery.domain.order.entity.OrderStatus;
@@ -43,7 +41,7 @@ public record OwnerOrderDetailResponseDto(
     return new OwnerOrderDetailResponseDto(
         order.getShop().getName(),
         order.getAddress(),
-        order.getMember().getUsername(),
+        order.getMember() == null ? "" : order.getMember().getUsername(),
         order.getInstruction(),
         order.getTotalPrice(),
         order.getOrderStatus(),
