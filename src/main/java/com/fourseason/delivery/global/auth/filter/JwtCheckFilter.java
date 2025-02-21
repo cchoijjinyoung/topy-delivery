@@ -20,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 import static com.fourseason.delivery.global.auth.exception.AuthErrorCode.*;
 
@@ -29,10 +30,17 @@ public class JwtCheckFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
 
+    // 지정한 경로로 시작되는 요청은 모두 제외 됨. 패턴은 적용안 됨.
+    private static final List<String> EXCLUDED_PATHS = List.of(
+            "/api/sign",
+            "/api/api-docs",
+            "/webjars"
+    );
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        return path.startsWith("/api") || path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs") || path.startsWith("/webjars");
+        String path = request.getRequestURI();
+        return EXCLUDED_PATHS.stream().anyMatch(path::startsWith);
     }
 
     @Override
