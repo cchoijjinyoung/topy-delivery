@@ -5,41 +5,49 @@ import static java.util.stream.Collectors.toList;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderMenu;
 import com.fourseason.delivery.domain.order.entity.OrderStatus;
-import com.querydsl.core.annotations.QueryProjection;
+import com.fourseason.delivery.domain.order.entity.OrderType;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Builder;
 
-public record OrderSummaryResponseDto(
+public record OwnerOrderDetailResponseDto(
     String shopName,
     String address,
+    String orderedUsername,
+    String instruction,
     Integer totalPrice,
     OrderStatus status,
+    OrderType type,
     List<MenuDto> menuList,
     LocalDateTime createdAt,
     LocalDateTime updatedAt,
     String updatedBy
 ) {
 
-  @QueryProjection
-  public OrderSummaryResponseDto(Order order) {
+  public OwnerOrderDetailResponseDto(Order order) {
     this(order.getShop().getName(),
         order.getAddress(),
+        order.getMember().getUsername(),
+        order.getInstruction(),
         order.getTotalPrice(),
         order.getOrderStatus(),
-        order.getOrderMenuList().stream().map(MenuDto::of).collect(toList()),
+        order.getOrderType(),
+        order.getOrderMenuList().stream().map(MenuDto::of).toList(),
         order.getCreatedAt(),
         order.getUpdatedAt(),
         order.getUpdatedBy()
     );
   }
 
-  public static OrderSummaryResponseDto of(Order order) {
-    return new OrderSummaryResponseDto(
+  public static OwnerOrderDetailResponseDto of(Order order) {
+    return new OwnerOrderDetailResponseDto(
         order.getShop().getName(),
         order.getAddress(),
+        order.getMember().getUsername(),
+        order.getInstruction(),
         order.getTotalPrice(),
         order.getOrderStatus(),
+        order.getOrderType(),
         order.getOrderMenuList().stream().map(MenuDto::of).toList(),
         order.getCreatedAt(),
         order.getUpdatedAt(),
@@ -50,13 +58,17 @@ public record OrderSummaryResponseDto(
   @Builder
   public record MenuDto(
       String name,
-      Integer quantity
+      Integer price,
+      Integer quantity,
+      Integer totalPrice
   ) {
 
     public static MenuDto of(OrderMenu orderMenu) {
       return MenuDto.builder()
           .name(orderMenu.getName())
+          .price(orderMenu.getPrice())
           .quantity(orderMenu.getQuantity())
+          .totalPrice(orderMenu.getPrice() * orderMenu.getQuantity())
           .build();
     }
   }

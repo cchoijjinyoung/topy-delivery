@@ -10,7 +10,8 @@ import org.springframework.http.HttpStatus;
 public enum MemberErrorCode implements ErrorCode {
 
     // TODO: error message 고민...
-    MEMBER_DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 가입된 이메일 주소입니다."),
+    MEMBER_DUPLICATE_USERNAME(HttpStatus.CONFLICT, "해당 username 은 사용할 수 없습니다."),
+    MEMBER_DUPLICATE_EMAIL(HttpStatus.CONFLICT, "해당 email 은 사용할 수 없습니다."),
     // 인증 정보가 잘못됐을 경우 메시지를 따로 안 보내는 것이....
     MEMBER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "ID / 비밀번호가 잘못되었습니다."),
     MEMBER_INVALID_CREDENTIAL(HttpStatus.UNAUTHORIZED, "ID / 비밀번호가 잘못되었습니다.")

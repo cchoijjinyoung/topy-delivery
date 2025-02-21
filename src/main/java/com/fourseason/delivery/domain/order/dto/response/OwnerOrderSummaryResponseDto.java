@@ -10,9 +10,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Builder;
 
-public record OrderSummaryResponseDto(
+public record OwnerOrderSummaryResponseDto(
     String shopName,
     String address,
+    String orderedUsername,
     Integer totalPrice,
     OrderStatus status,
     List<MenuDto> menuList,
@@ -22,22 +23,24 @@ public record OrderSummaryResponseDto(
 ) {
 
   @QueryProjection
-  public OrderSummaryResponseDto(Order order) {
+  public OwnerOrderSummaryResponseDto(Order order) {
     this(order.getShop().getName(),
         order.getAddress(),
+        order.getMember().getUsername(),
         order.getTotalPrice(),
         order.getOrderStatus(),
-        order.getOrderMenuList().stream().map(MenuDto::of).collect(toList()),
+        order.getOrderMenuList().stream().map(MenuDto::of).toList(),
         order.getCreatedAt(),
         order.getUpdatedAt(),
         order.getUpdatedBy()
     );
   }
 
-  public static OrderSummaryResponseDto of(Order order) {
-    return new OrderSummaryResponseDto(
+  public static OwnerOrderSummaryResponseDto of(Order order) {
+    return new OwnerOrderSummaryResponseDto(
         order.getShop().getName(),
         order.getAddress(),
+        order.getMember().getUsername(),
         order.getTotalPrice(),
         order.getOrderStatus(),
         order.getOrderMenuList().stream().map(MenuDto::of).toList(),

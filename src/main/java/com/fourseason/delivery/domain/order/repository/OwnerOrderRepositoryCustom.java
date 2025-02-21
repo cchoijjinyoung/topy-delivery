@@ -2,8 +2,11 @@ package com.fourseason.delivery.domain.order.repository;
 
 import static com.fourseason.delivery.domain.order.entity.QOrder.order;
 
+import com.fourseason.delivery.domain.menu.exception.MenuErrorCode;
 import com.fourseason.delivery.domain.order.dto.response.OrderSummaryResponseDto;
+import com.fourseason.delivery.domain.order.dto.response.OwnerOrderSummaryResponseDto;
 import com.fourseason.delivery.domain.order.dto.response.QOrderSummaryResponseDto;
+import com.fourseason.delivery.domain.order.dto.response.QOwnerOrderSummaryResponseDto;
 import com.fourseason.delivery.domain.order.entity.QOrder;
 import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
 import com.fourseason.delivery.global.dto.PageRequestDto;
@@ -15,22 +18,26 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class OrderRepositoryCustom {
+public class OwnerOrderRepositoryCustom {
 
   private final JPAQueryFactory jpaQueryFactory;
 
   /**
-   * 주문 목록 조회
+   * 가게 주문 목록 조회
    */
-  public PageResponseDto<OrderSummaryResponseDto> findOrderListWithPage(Long memberId,
-      PageRequestDto pageRequestDto) {
-    List<OrderSummaryResponseDto> content = getOrderList(memberId, pageRequestDto);
-    long total = getTotalDataCount(memberId);
+  public PageResponseDto<OwnerOrderSummaryResponseDto> findOrderListWithPage(
+      Long memberId,
+      UUID shopId,
+      PageRequestDto pageRequestDto
+  ) {
+    List<OwnerOrderSummaryResponseDto> content = getOrderList(memberId, shopId, pageRequestDto);
+    long total = getTotalDataCount(memberId, shopId);
 
     return new PageResponseDto<>(content, total);
   }
@@ -38,11 +45,15 @@ public class OrderRepositoryCustom {
   /**
    * 페이징 결과 조회 메서드
    */
-  private List<OrderSummaryResponseDto> getOrderList(Long memberId, PageRequestDto pageRequestDto) {
-    JPAQuery<OrderSummaryResponseDto> query = jpaQueryFactory
-        .select(new QOrderSummaryResponseDto(order))
+  private List<OwnerOrderSummaryResponseDto> getOrderList(
+      Long memberId,
+      UUID shopId,
+      PageRequestDto pageRequestDto
+  ) {
+    JPAQuery<OwnerOrderSummaryResponseDto> query = jpaQueryFactory
+        .select(new QOwnerOrderSummaryResponseDto(order))
         .from(order)
-        .where(getWhereConditions(memberId))
+        .where(getWhereConditions(memberId, shopId))
         .offset(pageRequestDto.getFirstIndex())
         .limit(pageRequestDto.getSize())
         .orderBy(getOrderConditions(pageRequestDto));
@@ -53,11 +64,11 @@ public class OrderRepositoryCustom {
   /**
    * 전체 데이터 수 조회
    */
-  private long getTotalDataCount(Long memberId) {
+  private long getTotalDataCount(Long memberId, UUID shopId) {
     return Optional.ofNullable(jpaQueryFactory
             .select(order.count())
             .from(order)
-            .where(getWhereConditions(memberId))
+            .where(getWhereConditions(memberId, shopId))
             .fetchOne()
         )
         .orElse(0L);
@@ -66,11 +77,15 @@ public class OrderRepositoryCustom {
   /**
    * 조회 조건
    */
-  private BooleanBuilder getWhereConditions(Long memberId) {
+  private BooleanBuilder getWhereConditions(Long memberId, UUID shopId) {
     BooleanBuilder builder = new BooleanBuilder();
 
+    if (shopId != null) {
+      builder.and(order.shop.id.eq(shopId));
+    }
+
     return builder.and(order.deletedAt.isNull())
-        .and(order.member.id.eq(memberId));
+        .and(order.shop.member.id.eq(memberId));
   }
 
   /**
