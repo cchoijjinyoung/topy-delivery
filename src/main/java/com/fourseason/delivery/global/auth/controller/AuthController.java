@@ -1,8 +1,8 @@
 package com.fourseason.delivery.global.auth.controller;
 
 import com.fourseason.delivery.global.auth.CustomPrincipal;
-import com.fourseason.delivery.global.auth.dto.SignInRequestDto;
-import com.fourseason.delivery.global.auth.dto.SignUpRequestDto;
+import com.fourseason.delivery.global.auth.dto.request.SignInRequestDto;
+import com.fourseason.delivery.global.auth.dto.request.SignUpRequestDto;
 import com.fourseason.delivery.global.auth.dto.TokenDto;
 import com.fourseason.delivery.global.auth.service.AuthService;
 import jakarta.validation.Valid;
@@ -26,11 +26,13 @@ public class AuthController {
 
     @PostMapping("/sign-up")
     public ResponseEntity<Void> signUp(
-            @RequestBody @Valid SignUpRequestDto request,
-            UriComponentsBuilder ucb
+            @RequestBody @Valid SignUpRequestDto request
     ) {
         authService.signUp(request);
-        URI location = ucb.path("/api/sign-in").build().toUri();
+        URI location = UriComponentsBuilder.newInstance()
+                .path("/api/sign-in")
+                .build()
+                .toUri();
         return ResponseEntity.created(location).build();
     }
 
