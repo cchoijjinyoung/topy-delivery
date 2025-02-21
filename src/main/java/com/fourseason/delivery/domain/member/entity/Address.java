@@ -28,7 +28,7 @@ public class Address extends BaseTimeEntity {
     @Column(nullable = false)
     private String detailAddress;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "member_id")
     private Member member;
 
