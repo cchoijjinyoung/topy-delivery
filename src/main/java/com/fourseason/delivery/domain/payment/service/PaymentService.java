@@ -2,7 +2,9 @@ package com.fourseason.delivery.domain.payment.service;
 
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.order.entity.Order;
-import com.fourseason.delivery.domain.payment.dto.request.CreatePaymentRequestDto;
+import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
+import com.fourseason.delivery.domain.order.repository.OrderRepository;
+import com.fourseason.delivery.domain.payment.dto.external.ExternalPaymentDto;
 import com.fourseason.delivery.domain.payment.dto.response.PaymentResponseDto;
 import com.fourseason.delivery.domain.payment.entity.Payment;
 import com.fourseason.delivery.domain.payment.exception.PaymentErrorCode;
@@ -22,8 +24,10 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
+
     private final PaymentRepository paymentRepository;
     private final PaymentRepositoryCustom paymentRepositoryCustom;
+    private final OrderRepository orderRepository;
 
     /**
      * 사용자 결제 전체 조회
@@ -57,15 +61,6 @@ public class PaymentService {
      * 2. client에서 테스트 결제 요청진행 이후 받은 payment 객체로 그 결제 승인을 다시 server의 요청을 보냄(주소만 적절히 수정해 주면 될것 같음)
      */
 
-    /**
-     * payment 요청을 위한 order값 전달
-     */
-    public URI checkoutPayment(UUID orderId) {
-        // 원래는 orderId로 order 조회후 값을 넣는다
-        URI location = URI.create("/static/checkout?orderId="+ orderId + "&amount=" + 20000);
-        return location;
-    }
-
 
     /**
      * 결제 승인 과정
@@ -75,22 +70,21 @@ public class PaymentService {
      * 4. response로 돌려줌
      *
      */
-//    @Transactional
-//    public URI registerPayment(final CreatePaymentRequestDto createPaymentRequestDto, final Member member) {
-//
-//        // Todo: 임시 order 객체 생성 실제로는 order객체 조회, 확인 필요
-//        Order order = Order.builder().build();
-//        // Todo: pb사에 결제 승인처리, 결제 성공확인, 받은 객체에서 status 값 적용, 현재는 임시로 "DONE" 사용
-//        //
-//        Payment newPayment = Payment.addOf(createPaymentRequestDto, "DONE", order, member);
-//        paymentRepository.save(newPayment);
-//
-//        return ServletUriComponentsBuilder
-//                .fromCurrentRequest()
-//                .path("/{id}")
-//                .buildAndExpand(newPayment.getId())
-//                .toUri();
-//    }
+    @Transactional
+    public URI registerPayment(final ExternalPaymentDto externalPaymentDto, final Member member) {
+        Order order = orderRepository.findById(externalPaymentDto.orderId())
+                .orElseThrow(() ->
+                    new CustomException(OrderErrorCode.ORDER_NOT_FOUND)
+                );
+        Payment payment = Payment.addOf(externalPaymentDto, order, member);
+        paymentRepository.save(payment);
+
+        return ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(payment.getId())
+                .toUri();
+    }
 
     /**
      * 결제 취소
@@ -135,10 +129,6 @@ public class PaymentService {
 
         return PaymentResponseDto.of(payment);
     }
-
-    /**
-     * 승인처리관련
-     */
 
     /**
      * 에러처리

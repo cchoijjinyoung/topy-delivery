@@ -4,7 +4,7 @@ import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.entity.Role;
 import com.fourseason.delivery.domain.payment.dto.request.CreatePaymentRequestDto;
 import com.fourseason.delivery.domain.payment.dto.response.PaymentResponseDto;
-import com.fourseason.delivery.domain.payment.service.PaymentRestService;
+import com.fourseason.delivery.domain.payment.service.PaymentExternalService;
 import com.fourseason.delivery.domain.payment.service.PaymentService;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
@@ -23,7 +23,7 @@ import java.util.UUID;
 public class PaymentController {
 
     private final PaymentService paymentService;
-    private final PaymentRestService paymentRestService;
+    private final PaymentExternalService paymentExternalService;
 
     // Todo: 임시User 사용 회원가입 절차 적용후 수정 필요
     Member testMember = new Member("유저", "user@example.com", "1234", "010-0000-0000", Role.CUSTOMER);
@@ -52,22 +52,31 @@ public class PaymentController {
     }
 
     /**
-     * 결제 생성
+     * 결제 요청
      */
-    // created를 통해 httpstatus상의 의도를 명확하게, 생성, 수정된 값을 확인하기위해 location을 돌려줌
-//    @PostMapping()
-//    public ResponseEntity<Void> registerPayment(@RequestBody @Valid final CreatePaymentRequestDto createPaymentRequestDto
-////                                                            @AuthenticationPrincipal UserDetailsImpl userDetails
-//                                                            ) {
-//
-//        URI location = paymentService.registerPayment(createPaymentRequestDto, testMember);
-//        return ResponseEntity.created(location).build();
-//    }
+    @GetMapping("/checkout/{orderId}")
+    public ResponseEntity<Void> checkoutPayment(@PathVariable final UUID orderId) {
+        URI location = paymentExternalService.checkoutPayment(orderId);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(location)
+                .build();
+    }
+
+    /**
+     * 결제 승인 (결제 등록)
+     */
+    @PostMapping("/confirm")
+    public ResponseEntity<String> confirmPayment (
+            @RequestBody @Valid final CreatePaymentRequestDto createPaymentRequestDto
+//            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        return paymentExternalService.confirmPayment(createPaymentRequestDto, testMember);
+    }
 
     /**
      * 결제 취소
+     * 돌려주는 값이 없으므로 204상태 코드를 사용
      */
-    // 돌려주는 값이 없으므로 204상태 코드를 사용
     @PutMapping("/{paymentId}")
     public ResponseEntity<Void> cancelPayment(@PathVariable final UUID paymentId
 //                                              @AuthenticationPrincipal UserDetailsImpl userDetails
@@ -87,36 +96,4 @@ public class PaymentController {
         paymentService.deletePayment(paymentId, testMember);
         return ResponseEntity.noContent().build();
     }
-
-    /**
-     * 결제 요청
-     */
-    @GetMapping("/checkout/{orderId}")
-    public ResponseEntity<Void> checkoutPayment(@PathVariable final UUID orderId) {
-        URI location = paymentService.checkoutPayment(orderId);
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .location(location)
-                .build();
-    }
-
-    /**
-     * 결제 승인 (결제 등록)
-     */
-//    @PostMapping("/confirm")
-//    public ResponseEntity<PaymentResponseDto> confirmPayment(
-//            @RequestBody @Valid final CreatePaymentRequestDto createPaymentRequestDto
-//    ) {
-//        return paymentRestService.confirmPayment(createPaymentRequestDto);
-//    }
-
-    @PostMapping("/confirm")
-    public ResponseEntity<String> confirmPayment (
-            @RequestBody @Valid final CreatePaymentRequestDto createPaymentRequestDto
-    ) {
-        return paymentRestService.confirmPayment(createPaymentRequestDto);
-    }
-
-
-
-    //관리자 조회기능의 엔드포인트를 admin에 둘것인가 payment에 둘것인가
 }

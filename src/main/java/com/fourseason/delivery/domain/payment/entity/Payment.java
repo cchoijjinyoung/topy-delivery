@@ -2,6 +2,7 @@ package com.fourseason.delivery.domain.payment.entity;
 
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.order.entity.Order;
+import com.fourseason.delivery.domain.payment.dto.external.ExternalPaymentDto;
 import com.fourseason.delivery.domain.payment.dto.request.CreatePaymentRequestDto;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
@@ -58,18 +59,19 @@ public class Payment extends BaseTimeEntity {
         this.member = member;
     }
 
-//    public static Payment addOf(final CreatePaymentRequestDto dto, final String paymentStatus, final Order order, final Member member) {
-//        return Payment.builder()
-//                .paymentKey(dto.paymentKey())
-//                .paymentAmount(dto.amount())
-//                .paymentMethod(dto.paymentMethod())
-//                // Todo: 결제 승인 DONE, 결제 취소 CANCELED, 결제 실패 ABORTED, EXPIRED
-//                // 외부 api 서비스를 통해 값을 받다보니 변동성이 있어 string으로 사용
-//                .paymentStatus(paymentStatus)
-//                .order(order)
-//                .member(member)
-//                .build();
-//    }
+    /**
+     * TODO: requestDto에서 만들것이 아니라 결제결과에서 오는 payment객체를 받아서 결제 정보를 생성하는쪽이 좋을것 같다.
+     */
+    public static Payment addOf(final ExternalPaymentDto dto, final Order order, final Member member) {
+        return Payment.builder()
+                .paymentKey(dto.paymentKey())
+                .paymentAmount(dto.amount())
+                .paymentMethod(dto.method())
+                .paymentStatus(dto.status())
+                .order(order)
+                .member(member)
+                .build();
+    }
 
     //updateOf cancelOf 고민
     public void cancelOf(final String paymentStatus) {

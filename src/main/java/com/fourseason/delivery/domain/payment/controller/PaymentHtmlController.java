@@ -10,14 +10,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class PaymentHtmlController {
-
-//    @GetMapping("/checkout")
-//    public String checkout(@RequestParam final String orderId,
-//                           @RequestParam final int amount
-//    ) {
-//        return "/checkout";
-//    }
-
     /**
      * 인증성공처리
      * @param request
