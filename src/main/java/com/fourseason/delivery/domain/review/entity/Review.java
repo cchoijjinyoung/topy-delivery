@@ -63,9 +63,7 @@ public class Review extends BaseTimeEntity {
     }
 
     public void updateOf(ReviewRequestDto dto) {
-        if(dto.content() != null) {
-            this.content = dto.content();
-        }
+        this.content = dto.content();
         this.rating = dto.rating();
     }
 
