@@ -1,11 +1,9 @@
 package com.fourseason.delivery.domain.shop.dto.request;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.web.multipart.MultipartFile;
+import lombok.Builder;
 
-import java.util.List;
-
+@Builder
 public record CreateShopRequestDto(
         @NotBlank(message = "가게 이름은 필수 입력 값입니다.")
         String name,
