@@ -52,11 +52,13 @@ public class PaymentRepositoryCustom {
     private List<PaymentResponseDto> getPaymentList(final PageRequestDto pageRequestDto) {
         return jpaQueryFactory
                 .select(Projections.constructor(PaymentResponseDto.class,
-                        Expressions.stringTemplate("CAST({0} AS string)", payment.id),
+                        payment.id,
                         payment.paymentKey,
                         payment.paymentAmount,
                         payment.paymentMethod,
-                        payment.paymentMethod
+                        payment.paymentStatus,
+                        payment.cancelReason,
+                        payment.balanceAmount
                         ))
                 .from(payment)
                 .where(getWhereConditions())
@@ -72,11 +74,13 @@ public class PaymentRepositoryCustom {
     private List<PaymentResponseDto> getPaymentList(final PageRequestDto pageRequestDto, final Member member) {
         return jpaQueryFactory
                 .select(Projections.constructor(PaymentResponseDto.class,
-                        Expressions.stringTemplate("CAST({0} AS string)", payment.id),
+                        payment.id,
                         payment.paymentKey,
                         payment.paymentAmount,
                         payment.paymentMethod,
-                        payment.paymentMethod
+                        payment.paymentStatus,
+                        payment.cancelReason,
+                        payment.balanceAmount
                 ))
                 .from(payment)
                 .where(getWhereConditions(member))

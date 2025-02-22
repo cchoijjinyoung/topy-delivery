@@ -1,6 +1,8 @@
 package com.fourseason.delivery.domain.payment.service;
 
 import com.fourseason.delivery.domain.member.MemberErrorCode;
+import com.fourseason.delivery.domain.member.entity.Member;
+import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
@@ -15,9 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.UUID;
@@ -28,31 +30,20 @@ public class PaymentExternalService {
 
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
+    private final MemberRepository memberRepository;
 
     String widgetSecretKey = "test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6";
     Base64.Encoder encoder = Base64.getEncoder();
     byte[] encodedBytes = encoder.encode((widgetSecretKey + ":").getBytes(StandardCharsets.UTF_8));
     String authorizations = "Basic " + new String(encodedBytes);
 
-//    /**
-//     * payment 요청을 위한 order값 전달
-//     */
-//    public URI checkoutPayment(UUID orderId, String username) {
-//        Order order = orderRepository.findById(orderId).orElseThrow(
-//                () -> new CustomException(OrderErrorCode.ORDER_NOT_FOUND));
-//        // 원래는 orderId로 order 조회후 값을 넣는다
-//        return URI.create("/static/checkout?orderId="+ orderId + "&amount=" + 20000);
-//    }
 
     /**
      * tossPayment를 통해 결제 승인, payment객체를 받아옴
-     * TODO: 결제 진행후 이어서 db에 결제정보를 저장하도록 함
-     * 고민사항: 결제를 남이 해주는 경우가 있을까? 회원탈퇴한 사용자가 본인의 남아있던 주문을 결제하는경우가 있나?
-     * 회원탈퇴한 사람이 주문을 결제하는 경우가 아니라면 주문 생성시에도 username을 확인할 필요가 없어지고 confirmPayment와 registerPayment를 분리 할 수 있다.
      */
-    public String confirmPayment(CreatePaymentRequestDto createPaymentRequestDto) {
+    public String confirmPayment(CreatePaymentRequestDto createPaymentRequestDto, String username) {
         // 결제 검증
-//        String username = requestCheck(createPaymentRequestDto);
+        checkConfirm(createPaymentRequestDto, username);
         // 승인 요청
         RestClient restClient = RestClient.create();
         try {
@@ -65,7 +56,7 @@ public class PaymentExternalService {
                     .body(String.class);
 
         // 외부 api 호출 과정에서 internal error 발생시
-        } catch (HttpServerErrorException e) {
+        } catch (HttpStatusCodeException e) {
             throw new CustomRestClientException(e.getStatusCode(), e.getResponseBodyAsString());
         }
     }
@@ -73,16 +64,14 @@ public class PaymentExternalService {
     /**
      * 결제 취소
      */
-    public String cancelPayment(UUID paymentId, CancelPaymentRequestDto cancelPaymentRequestDto, String paymentKey) {
-//        Payment payment = paymentRepository.findByIdAndDeletedAtIsNotNull(paymentId)
-//                .orElseThrow(
-//                        () -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
-
+    public String cancelPayment(UUID paymentId, CancelPaymentRequestDto cancelPaymentRequestDto, String username) {
+        // 취소 검증
+        Payment payment = checkCancel(paymentId, username);
+        // 취소 요청
         RestClient restClient = RestClient.create();
         try {
             return restClient.post()
-//                    .uri("https://api.tosspayments.com//v1/payments/" + payment.getPaymentKey() + "/cancel")
-                    .uri("https://api.tosspayments.com//v1/payments/" + paymentKey + "/cancel")
+                    .uri("https://api.tosspayments.com//v1/payments/" + payment.getPaymentKey() + "/cancel")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Authorization", authorizations)
                     .body(cancelPaymentRequestDto)
@@ -95,10 +84,11 @@ public class PaymentExternalService {
         }
     }
 
+
     /**
      * 결제 시 검증
      */
-    private String requestCheck(CreatePaymentRequestDto createPaymentRequestDto){
+    private void checkConfirm(CreatePaymentRequestDto createPaymentRequestDto, String username){
         Order order = orderRepository.findById(createPaymentRequestDto.orderId())
                 .orElseThrow(() ->
                         new CustomException(OrderErrorCode.ORDER_NOT_FOUND)
@@ -106,9 +96,29 @@ public class PaymentExternalService {
         if (order.getMember().getDeletedAt() != null) {
             throw new CustomException(MemberErrorCode.MEMBER_NOT_FOUND);
         }
+        if (!order.getMember().getId().equals(checkMember(username).getId())) {
+            throw new CustomException(OrderErrorCode.NOT_ORDERED_BY_CUSTOMER);
+            // NOT_ORDERED_BY_CUSTOMER forbiden이 맞지 않을까용?
+        }
         if (order.getTotalPrice() != createPaymentRequestDto.amount()) {
             throw new CustomException(PaymentErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
-        return order.getMember().getUsername();
+    }
+
+    private Payment checkCancel(UUID paymentId, String username) {
+        Payment payment = paymentRepository.findByIdAndDeletedAtIsNull(paymentId)
+                .orElseThrow(
+                        () -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
+        if (!payment.getMember().getId().equals(checkMember(username))) {
+            throw new CustomException(PaymentErrorCode.PAYMENT_FORBIDDEN);
+        }
+
+        return payment;
+    }
+
+    private Member checkMember(final String username) {
+        Member member = memberRepository.findByUsernameAndDeletedAtIsNull(username)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
+        return member;
     }
 }

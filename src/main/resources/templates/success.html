@@ -50,9 +50,10 @@
           amount: urlParams.get("amount"),
         };
 
-        const response = await fetch("/api/payments/confirm", {
+        const response = await fetch("/api/payments", {
           method: "POST",
           headers: {
+            'Authorization': `${urlParams.get("jwt")}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(requestData),

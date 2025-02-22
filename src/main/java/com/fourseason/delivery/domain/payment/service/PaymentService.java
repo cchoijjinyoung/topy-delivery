@@ -24,10 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
-
-import com.fourseason.delivery.domain.payment.dto.external.ExternalCancelPaymentDto.Cancel;
 
 @Service
 @RequiredArgsConstructor
@@ -58,23 +55,18 @@ public class PaymentService {
     }
 
     /**
-     * 결제 승인 과정
-     * 1. 현재 order가 존재하는지 확인
-     * 2. 확인된 orderId를 담아서 결제 승인처리 (paymentRestService 참조)
-     * 3. 성공 or 실패 처리에 맞게 결제 정보 db에 저장
-     * 4. response로 돌려줌
-     *
+     * 결제 등록
      */
     @Transactional
-    public URI registerPayment(final String paymentResult) {
+    public URI registerPayment(final String paymentResult, String username) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             ExternalPaymentDto externalPaymentDto = objectMapper.readValue(paymentResult, ExternalPaymentDto.class);
-            Order order = orderRepository.findById(externalPaymentDto.orderId())
-                    .orElseThrow(() ->
-                            new CustomException(OrderErrorCode.ORDER_NOT_FOUND)
-                    );
-            Payment payment = Payment.addOf(externalPaymentDto, order, order.getMember());
+
+            Member member = checkMember(username);
+            Order order = checkOrder(externalPaymentDto.orderId(), member);
+
+            Payment payment = Payment.addOf(externalPaymentDto, order, member);
             paymentRepository.save(payment);
 
             return ServletUriComponentsBuilder
@@ -88,47 +80,28 @@ public class PaymentService {
     }
 
     /**
-     * 결제 취소 추가 구현 필요
+     * 결제 취소
      */
     @Transactional
-    public URI cancelPayment(final UUID paymentId, final String paymentResult) {
+    public URI cancelPayment(final UUID paymentId, final String paymentResult, String username) {
         try {
-//            Payment payment = checkPayment(paymentId, checkMember(username));
-//            Payment payment = paymentRepository.findByIdAndDeletedAtIsNotNull(paymentId).orElseThrow(
-//                    () -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
+            Payment payment = checkPayment(paymentId, checkMember(username));
 
             ObjectMapper objectMapper = new ObjectMapper();
             ExternalCancelPaymentDto externalCancelPaymentDto = objectMapper.readValue(paymentResult, ExternalCancelPaymentDto.class);
-            int balenceamount = externalCancelPaymentDto.balanceAmount();
-            List<Cancel> cancels = externalCancelPaymentDto.cancels();
-            String cancelReason = cancels.get(cancels.size() - 1).cancelReason();
 
-            System.out.println(balenceamount);
-            System.out.println(cancelReason);
+            payment.cancelOf(externalCancelPaymentDto);
 
-            return null;
-
-//            payment.cancelOf(externalCancelPaymentDto);
-//
-//            return ServletUriComponentsBuilder
-//                    .fromCurrentRequest()
-//                    .path("/{id}")
-//                    .buildAndExpand(payment.getId())
-//                    .toUri();
+            return ServletUriComponentsBuilder
+                    .fromCurrentRequest()
+                    .path("/{id}")
+                    .buildAndExpand(payment.getId())
+                    .toUri();
         } catch (JsonProcessingException e) {
             throw new CustomException(PaymentErrorCode.PAYMENT_MAPPING_FAIL);
         }
     }
 
-    /**
-     * 결제 삭제
-     */
-    @Transactional
-    public void deletePayment(final UUID paymentId, final String username) {
-        Payment payment = checkPayment(paymentId, checkMember(username));
-
-        payment.deleteOf(username);
-    }
 
     /**
      * 관리자 결제 전체 조회
@@ -150,13 +123,35 @@ public class PaymentService {
     }
 
     /**
-     * 에러처리
+     * 결제 삭제
      */
+    @Transactional
+    public void deletePayment(final UUID paymentId, final String username) {
+        Payment payment = checkPayment(paymentId);
+
+        payment.deleteOf(username);
+    }
+
+    /**
+     * 검증 및 에러처리
+     */
+    private Order checkOrder(final UUID orderId, final Member member) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new CustomException(OrderErrorCode.ORDER_NOT_FOUND));
+        if (!order.getMember().getId().equals(member.getId())) {
+            throw new CustomException(OrderErrorCode.NOT_ORDERED_BY_CUSTOMER);
+            // NOT_ORDERED_BY_CUSTOMER forbiden이 맞지 않을까용?
+        }
+
+        return order;
+    }
+
     private Payment checkPayment(final UUID paymentId, final Member member) {
-        Payment payment = paymentRepository.findByIdAndDeletedAtIsNotNull(paymentId)
+        Payment payment = paymentRepository.findByIdAndDeletedAtIsNull(paymentId)
                 .orElseThrow(() -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
         if (!payment.getMember().getId().equals(member.getId())) {
-            throw new CustomException(PaymentErrorCode.PAYMENT_NOT_UNAUTHORIZED);
+            throw new CustomException(PaymentErrorCode.PAYMENT_FORBIDDEN);
         }
 
         return payment;
@@ -164,7 +159,7 @@ public class PaymentService {
 
     private Payment checkPayment(final UUID paymentId) {
 
-        return paymentRepository.findByIdAndDeletedAtIsNotNull(paymentId)
+        return paymentRepository.findByIdAndDeletedAtIsNull(paymentId)
                 .orElseThrow(() -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
     }
 

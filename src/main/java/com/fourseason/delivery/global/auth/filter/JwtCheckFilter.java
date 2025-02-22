@@ -36,8 +36,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             "/api/api-docs",
             "/webjars",
             "/page",
-            "/css",
-            "/api"
+            "/css"
     );
 
     @Override
