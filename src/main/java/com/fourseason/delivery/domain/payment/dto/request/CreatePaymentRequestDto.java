@@ -14,7 +14,6 @@ public record CreatePaymentRequestDto(
         @NotBlank(message = "결제승인키는 필수 입력 값입니다.")
         String paymentKey,
 
-        @NotNull(message = "결제금액은 필수 입력 값입니다.")
         @PositiveOrZero(message = "결제금액은 음수가 될 수 없습니다.")
         int amount
 

@@ -2,6 +2,7 @@ package com.fourseason.delivery.domain.payment.entity;
 
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.order.entity.Order;
+import com.fourseason.delivery.domain.payment.dto.external.ExternalCancelPaymentDto;
 import com.fourseason.delivery.domain.payment.dto.external.ExternalPaymentDto;
 import com.fourseason.delivery.domain.payment.dto.request.CreatePaymentRequestDto;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
@@ -35,6 +36,8 @@ public class Payment extends BaseTimeEntity {
 
     @Column(nullable = false)
     private String paymentStatus;
+
+    private String cancelReason;
 
     @OneToOne
     @JoinColumn(name = "order_id")
@@ -71,8 +74,10 @@ public class Payment extends BaseTimeEntity {
     }
 
     //updateOf cancelOf 고민
-    public void cancelOf(final String paymentStatus) {
-        this.paymentStatus = paymentStatus;
+    public void cancelOf(final ExternalCancelPaymentDto dto) {
+        this.paymentAmount = this.paymentAmount - dto.cancel().cancelAmount();
+        this.paymentStatus = dto.status();
+        this.cancelReason = dto.cancel().cancelReason();
     }
 
     public void deleteOf(final String deletedBy) {

@@ -8,6 +8,7 @@ import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
+import com.fourseason.delivery.domain.payment.dto.external.ExternalCancelPaymentDto;
 import com.fourseason.delivery.domain.payment.dto.external.ExternalPaymentDto;
 import com.fourseason.delivery.domain.payment.dto.response.PaymentResponseDto;
 import com.fourseason.delivery.domain.payment.entity.Payment;
@@ -87,15 +88,25 @@ public class PaymentService {
      * 결제 취소 추가 구현 필요
      */
     @Transactional
-    public URI cancelPayment(final UUID paymentId, final String username) {
-        Payment payment = checkPayment(paymentId, checkMember(username));
-        // Todo: pb사에 결제 취소처리, 취소 성공확인, 받은 객체에서 status 값 적용, 현재는 임시로 "CANCELED" 사용
-        payment.cancelOf("CANCELED");
+    public URI cancelPayment(final UUID paymentId, final String paymentResult) {
+        try {
+//            Payment payment = checkPayment(paymentId, checkMember(username));
+            Payment payment = paymentRepository.findByIdAndDeletedAtIsNotNull(paymentId).orElseThrow(
+                    () -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
 
-        return ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .build()
-                .toUri();
+            ObjectMapper objectMapper = new ObjectMapper();
+            ExternalCancelPaymentDto externalCancelPaymentDto = objectMapper.readValue(paymentResult, ExternalCancelPaymentDto.class);
+
+            payment.cancelOf(externalCancelPaymentDto);
+
+            return ServletUriComponentsBuilder
+                    .fromCurrentRequest()
+                    .path("/{id}")
+                    .buildAndExpand(payment.getId())
+                    .toUri();
+        } catch (JsonProcessingException e) {
+            throw new CustomException(PaymentErrorCode.PAYMENT_MAPPING_FAIL);
+        }
     }
 
     /**

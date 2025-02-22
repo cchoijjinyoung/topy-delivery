@@ -2,6 +2,7 @@ package com.fourseason.delivery.domain.payment.controller;
 
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.entity.Role;
+import com.fourseason.delivery.domain.payment.dto.request.CancelPaymentRequestDto;
 import com.fourseason.delivery.domain.payment.dto.request.CreatePaymentRequestDto;
 import com.fourseason.delivery.domain.payment.dto.response.PaymentResponseDto;
 import com.fourseason.delivery.domain.payment.service.PaymentExternalService;
@@ -13,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -72,8 +74,10 @@ public class PaymentController {
             @RequestBody @Valid final CreatePaymentRequestDto createPaymentRequestDto
     ) {
         String paymentResult = paymentExternalService.confirmPayment(createPaymentRequestDto);
+        System.out.println(paymentResult);
         // 여기서 결제 db저장 이 처리를 비동기로 처리하는것이 best 실패시 재시도 보정도 좋음
-        URI location = paymentService.registerPayment(paymentResult);
+//        URI location = paymentService.registerPayment(paymentResult);
+        URI location = null;
         return ResponseEntity.created(location).build();
     }
 
@@ -83,9 +87,13 @@ public class PaymentController {
      */
     @PutMapping("/{paymentId}")
     public ResponseEntity<Void> cancelPayment(@PathVariable final UUID paymentId,
+                                              @RequestBody final CancelPaymentRequestDto cancelPaymentRequestDto,
                                               @AuthenticationPrincipal CustomPrincipal customPrincipal
     ) {
-        URI location = paymentService.cancelPayment(paymentId, customPrincipal.getName());
+        String paymentResult = paymentExternalService.cancelPayment(paymentId, cancelPaymentRequestDto);
+        System.out.println(paymentResult);
+//        URI location = paymentService.cancelPayment(paymentId, paymentResult);
+        URI location = null;
         return ResponseEntity.noContent().location(location).build();
 
     }
@@ -100,5 +108,28 @@ public class PaymentController {
     ) {
         paymentService.deletePayment(paymentId, customPrincipal.getName());
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 관리자 결제 전체 조회
+     */
+    @Secured({"ROLE_MANAGER", "ROLE_ADMIN"})
+    @GetMapping()
+    public ResponseEntity<PageResponseDto<PaymentResponseDto>> getPaymentList(@RequestParam(defaultValue = "1") final int page,
+                                                                              @RequestParam(defaultValue = "10") final int size,
+                                                                              @RequestParam(defaultValue = "latest") final String orderBy
+    ) {
+        PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderBy);
+        return ResponseEntity.ok(paymentService.findPaymentList(pageRequestDto));
+    }
+
+    /**
+     * 관리자 결졔 상세 조회
+     */
+    @Secured({"ROLE_MANAGER", "ROLE_ADMIN"})
+    @GetMapping("/{paymentId}")
+    public ResponseEntity<PaymentResponseDto> getPayment(@PathVariable final UUID paymentId
+    ) {
+        return ResponseEntity.ok(paymentService.getPayment(paymentId));
     }
 }

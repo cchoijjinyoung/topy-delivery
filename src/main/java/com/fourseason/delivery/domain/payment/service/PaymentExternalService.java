@@ -4,9 +4,12 @@ import com.fourseason.delivery.domain.member.MemberErrorCode;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
+import com.fourseason.delivery.domain.payment.dto.request.CancelPaymentRequestDto;
 import com.fourseason.delivery.domain.payment.dto.request.CreatePaymentRequestDto;
+import com.fourseason.delivery.domain.payment.entity.Payment;
 import com.fourseason.delivery.domain.payment.exception.CustomRestClientException;
 import com.fourseason.delivery.domain.payment.exception.PaymentErrorCode;
+import com.fourseason.delivery.domain.payment.repository.PaymentRepository;
 import com.fourseason.delivery.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -24,6 +27,7 @@ import java.util.UUID;
 public class PaymentExternalService {
 
     private final OrderRepository orderRepository;
+    private final PaymentRepository paymentRepository;
 
     String widgetSecretKey = "test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6";
     Base64.Encoder encoder = Base64.getEncoder();
@@ -61,6 +65,30 @@ public class PaymentExternalService {
                     .body(String.class);
 
         // 외부 api 호출 과정에서 internal error 발생시
+        } catch (HttpServerErrorException e) {
+            throw new CustomRestClientException(e.getStatusCode(), e.getResponseBodyAsString());
+        }
+    }
+
+    /**
+     * 결제 취소
+     */
+    public String cancelPayment(UUID paymentId, CancelPaymentRequestDto cancelPaymentRequestDto) {
+        Payment payment = paymentRepository.findByIdAndDeletedAtIsNotNull(paymentId)
+                .orElseThrow(
+                        () -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
+
+        RestClient restClient = RestClient.create();
+        try {
+            return restClient.post()
+                    .uri("https://api.tosspayments.com//v1/payments/" + payment.getPaymentKey() + "/cancel")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", authorizations)
+                    .body(cancelPaymentRequestDto)
+                    .retrieve()
+                    .body(String.class);
+
+            // 외부 api 호출 과정에서 internal error 발생시
         } catch (HttpServerErrorException e) {
             throw new CustomRestClientException(e.getStatusCode(), e.getResponseBodyAsString());
         }
