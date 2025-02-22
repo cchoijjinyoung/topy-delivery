@@ -15,7 +15,7 @@ public class PageRequestDto {
     @Builder
     public PageRequestDto(int page, int size, String order) {
         this.page = page;
-        this.size = validateSize(size);
+        this.size = size;
         this.order = order;
     }
 
@@ -36,12 +36,5 @@ public class PageRequestDto {
 
     public long getFirstIndex() {
         return (long) this.page * this.size;
-    }
-
-    private int validateSize(int size) {
-        if (size == 10 || size == 30 || size == 50) {
-            return size;
-        }
-        return 10;
     }
 }
