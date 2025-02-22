@@ -34,19 +34,6 @@ public record OrderSummaryResponseDto(
     );
   }
 
-  public static OrderSummaryResponseDto of(Order order) {
-    return new OrderSummaryResponseDto(
-        order.getShop().getName(),
-        order.getAddress(),
-        order.getTotalPrice(),
-        order.getOrderStatus(),
-        order.getOrderMenuList().stream().map(MenuDto::of).toList(),
-        order.getCreatedAt(),
-        order.getUpdatedAt(),
-        order.getUpdatedBy()
-    );
-  }
-
   @Builder
   public record MenuDto(
       String name,
