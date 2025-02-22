@@ -46,7 +46,7 @@ public class AddressController {
      */
     @PutMapping("/{address_id}")
     public ResponseEntity<AddressUpdateResponseDto> updateAddress(@AuthenticationPrincipal CustomPrincipal principal,
-                                                                  @PathVariable UUID addressId,
+                                                                  @PathVariable("address_id") UUID addressId,
                                                                   @Valid @RequestBody AddressUpdateRequestDto addressUpdateRequestDto) {
         return ResponseEntity.ok(addressService.updateAddress(principal.getId(), addressId, addressUpdateRequestDto));
     }
@@ -57,7 +57,7 @@ public class AddressController {
      */
     @DeleteMapping("/{address_id}")
     public ResponseEntity<Void> deleteAddress(@AuthenticationPrincipal CustomPrincipal principal,
-                                              @PathVariable UUID addressId) {
+                                              @PathVariable("address_id") UUID addressId) {
         addressService.deleteAddress(principal.getId(), addressId);
         return ResponseEntity.ok().build();
     }
