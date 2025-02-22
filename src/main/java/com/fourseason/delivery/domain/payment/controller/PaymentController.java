@@ -55,7 +55,7 @@ public class PaymentController {
 
     /**
      * 결제 요청
-     * example: http://localhost:8080/page/checkout?orderId=93f73279-8449-40ba-90c8-88e5180d891f&amount=20000&
+     * example: http://localhost:8080/page/checkout?orderId=93f73279-8449-40ba-90c8-88e5180d891f&amount=20000
      */
 //    @GetMapping("/checkout/{orderId}")
 //    public ResponseEntity<Void> checkoutPayment(@PathVariable final UUID orderId,
@@ -85,15 +85,15 @@ public class PaymentController {
      * 결제 취소
      * 돌려주는 값이 없으므로 204상태 코드를 사용
      */
-    @PutMapping("/{paymentId}")
+    @PutMapping("/{paymentId}/{paymentKey}")
     public ResponseEntity<Void> cancelPayment(@PathVariable final UUID paymentId,
+                                              @PathVariable final String paymentKey,
                                               @RequestBody final CancelPaymentRequestDto cancelPaymentRequestDto,
                                               @AuthenticationPrincipal CustomPrincipal customPrincipal
     ) {
-        String paymentResult = paymentExternalService.cancelPayment(paymentId, cancelPaymentRequestDto);
+        String paymentResult = paymentExternalService.cancelPayment(paymentId, cancelPaymentRequestDto, paymentKey);
         System.out.println(paymentResult);
-//        URI location = paymentService.cancelPayment(paymentId, paymentResult);
-        URI location = null;
+        URI location = paymentService.cancelPayment(paymentId, paymentResult);
         return ResponseEntity.noContent().location(location).build();
 
     }
@@ -114,7 +114,7 @@ public class PaymentController {
      * 관리자 결제 전체 조회
      */
     @Secured({"ROLE_MANAGER", "ROLE_ADMIN"})
-    @GetMapping()
+    @GetMapping("/admin")
     public ResponseEntity<PageResponseDto<PaymentResponseDto>> getPaymentList(@RequestParam(defaultValue = "1") final int page,
                                                                               @RequestParam(defaultValue = "10") final int size,
                                                                               @RequestParam(defaultValue = "latest") final String orderBy
@@ -127,7 +127,7 @@ public class PaymentController {
      * 관리자 결졔 상세 조회
      */
     @Secured({"ROLE_MANAGER", "ROLE_ADMIN"})
-    @GetMapping("/{paymentId}")
+    @GetMapping("/{paymentId}/admin")
     public ResponseEntity<PaymentResponseDto> getPayment(@PathVariable final UUID paymentId
     ) {
         return ResponseEntity.ok(paymentService.getPayment(paymentId));

@@ -73,15 +73,16 @@ public class PaymentExternalService {
     /**
      * 결제 취소
      */
-    public String cancelPayment(UUID paymentId, CancelPaymentRequestDto cancelPaymentRequestDto) {
-        Payment payment = paymentRepository.findByIdAndDeletedAtIsNotNull(paymentId)
-                .orElseThrow(
-                        () -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
+    public String cancelPayment(UUID paymentId, CancelPaymentRequestDto cancelPaymentRequestDto, String paymentKey) {
+//        Payment payment = paymentRepository.findByIdAndDeletedAtIsNotNull(paymentId)
+//                .orElseThrow(
+//                        () -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
 
         RestClient restClient = RestClient.create();
         try {
             return restClient.post()
-                    .uri("https://api.tosspayments.com//v1/payments/" + payment.getPaymentKey() + "/cancel")
+//                    .uri("https://api.tosspayments.com//v1/payments/" + payment.getPaymentKey() + "/cancel")
+                    .uri("https://api.tosspayments.com//v1/payments/" + paymentKey + "/cancel")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Authorization", authorizations)
                     .body(cancelPaymentRequestDto)

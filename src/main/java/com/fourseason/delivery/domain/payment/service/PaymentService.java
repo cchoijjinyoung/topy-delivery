@@ -24,7 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
+
+import com.fourseason.delivery.domain.payment.dto.external.ExternalCancelPaymentDto.Cancel;
 
 @Service
 @RequiredArgsConstructor
@@ -91,19 +94,27 @@ public class PaymentService {
     public URI cancelPayment(final UUID paymentId, final String paymentResult) {
         try {
 //            Payment payment = checkPayment(paymentId, checkMember(username));
-            Payment payment = paymentRepository.findByIdAndDeletedAtIsNotNull(paymentId).orElseThrow(
-                    () -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
+//            Payment payment = paymentRepository.findByIdAndDeletedAtIsNotNull(paymentId).orElseThrow(
+//                    () -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
 
             ObjectMapper objectMapper = new ObjectMapper();
             ExternalCancelPaymentDto externalCancelPaymentDto = objectMapper.readValue(paymentResult, ExternalCancelPaymentDto.class);
+            int balenceamount = externalCancelPaymentDto.balanceAmount();
+            List<Cancel> cancels = externalCancelPaymentDto.cancels();
+            String cancelReason = cancels.get(cancels.size() - 1).cancelReason();
 
-            payment.cancelOf(externalCancelPaymentDto);
+            System.out.println(balenceamount);
+            System.out.println(cancelReason);
 
-            return ServletUriComponentsBuilder
-                    .fromCurrentRequest()
-                    .path("/{id}")
-                    .buildAndExpand(payment.getId())
-                    .toUri();
+            return null;
+
+//            payment.cancelOf(externalCancelPaymentDto);
+//
+//            return ServletUriComponentsBuilder
+//                    .fromCurrentRequest()
+//                    .path("/{id}")
+//                    .buildAndExpand(payment.getId())
+//                    .toUri();
         } catch (JsonProcessingException e) {
             throw new CustomException(PaymentErrorCode.PAYMENT_MAPPING_FAIL);
         }

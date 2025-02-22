@@ -3,6 +3,7 @@ package com.fourseason.delivery.domain.payment.dto.external;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.util.List;
 import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -18,8 +19,11 @@ public record ExternalCancelPaymentDto (
 
         String status,
 
-        Cancel cancel
+        List<Cancel> cancels,
+
+        int balanceAmount
 ){
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Cancel (
             String cancelReason,
             int cancelAmount

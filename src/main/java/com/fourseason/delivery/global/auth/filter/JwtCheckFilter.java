@@ -36,12 +36,14 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             "/api/api-docs",
             "/webjars",
             "/page",
-            "/css"
+            "/css",
+            "/api"
     );
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
+        System.out.println(path);
         return EXCLUDED_PATHS.stream().anyMatch(path::startsWith);
     }
 

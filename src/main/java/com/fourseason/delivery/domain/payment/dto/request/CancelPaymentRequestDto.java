@@ -8,6 +8,6 @@ public record CancelPaymentRequestDto (
         String cancelReason,
 
         @Positive(message = "취소금액은 양수만 가능합니다.")
-        int cancelAmount
+        Integer cancelAmount
 ){
 }
