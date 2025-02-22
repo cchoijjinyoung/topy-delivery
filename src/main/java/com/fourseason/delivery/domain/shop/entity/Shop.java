@@ -47,7 +47,7 @@ public class Shop extends BaseTimeEntity {
     private Category category;
 
     @Builder
-    public Shop(String name, String description, String tel, String address, String detailAddress, Member member, Category category) {
+    private Shop(String name, String description, String tel, String address, String detailAddress, Member member, Category category) {
         this.name = name;
         this.description = description;
         this.tel = tel;
