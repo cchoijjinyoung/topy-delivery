@@ -53,7 +53,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handel CustomRestClientException
+     * Handle CustomRestClientException
      */
     @ExceptionHandler(CustomRestClientException.class)
     public ResponseEntity<String> handleCustomRestClientException(CustomRestClientException e) {

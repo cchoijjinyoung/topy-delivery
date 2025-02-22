@@ -80,7 +80,6 @@ public class Payment extends BaseTimeEntity {
                 .build();
     }
 
-    //updateOf cancelOf 고민
     public void cancelOf(final ExternalCancelPaymentDto dto) {
         this.balanceAmount = dto.balanceAmount();
         this.paymentStatus = dto.status();
