@@ -1,0 +1,45 @@
+spring:
+  datasource:
+    username: admin
+    url: jdbc:postgresql://localhost:5432/fourseason?serverTimezone=Asia/Seoul
+    password: 1234
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${ACCESS_KEY}
+      secret-key: ${SECRET_KEY}
+    region:
+      static: ap-southeast-2
+    s3:
+      bucket: s1jin-bucket
+    stack:
+      auto: false
+
+logging:
+  level:
+    sql: debug
+
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+jwt:
+  issuer: "s1jin-delivery"
+  access-expiration: 30 # Access Token: min
+  refresh-expiration: 7 # Refresh Token: day
+  secret: ${JWT_SECRET}
+
+
+file:
+  image-extension: jpg, jpeg, png, gif
