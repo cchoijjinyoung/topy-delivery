@@ -42,7 +42,7 @@ public class AddressController {
      * 주소 수정
      */
     @PutMapping("/{address_id}")
-    public ResponseEntity<AddressUpdateResponseDto> updateAddress(@PathVariable UUID addressId,
+    public ResponseEntity<AddressUpdateResponseDto> updateAddress(@PathVariable("address_id") UUID addressId,
                                                                   @Valid @RequestBody AddressUpdateRequestDto addressUpdateRequestDto) {
         return ResponseEntity.ok(addressService.updateAddress(addressId, addressUpdateRequestDto));
     }
@@ -52,7 +52,7 @@ public class AddressController {
      * 주소 삭제
      */
     @DeleteMapping("/{address_id}")
-    public ResponseEntity<Void> deleteAddress(@PathVariable UUID addressId) {
+    public ResponseEntity<Void> deleteAddress(@PathVariable("address_id") UUID addressId) {
         addressService.deleteAddress(addressId);
         return ResponseEntity.ok().build();
     }
