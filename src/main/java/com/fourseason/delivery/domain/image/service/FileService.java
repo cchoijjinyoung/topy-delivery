@@ -7,6 +7,11 @@ import com.fourseason.delivery.domain.menu.entity.MenuImage;
 import com.fourseason.delivery.domain.menu.exception.MenuErrorCode;
 import com.fourseason.delivery.domain.menu.repository.MenuImageRepository;
 import com.fourseason.delivery.domain.menu.repository.MenuRepository;
+import com.fourseason.delivery.domain.review.entity.Review;
+import com.fourseason.delivery.domain.review.entity.ReviewImage;
+import com.fourseason.delivery.domain.review.exception.ReviewErrorCode;
+import com.fourseason.delivery.domain.review.repository.ReviewImageRepository;
+import com.fourseason.delivery.domain.review.repository.ReviewRepository;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.domain.shop.entity.ShopImage;
 import com.fourseason.delivery.domain.shop.exception.ShopErrorCode;
@@ -36,6 +41,10 @@ public class FileService {
     private final ShopRepository shopRepository;
 
     private final MenuRepository menuRepository;
+
+    private final ReviewRepository reviewRepository;
+
+    private final ReviewImageRepository reviewImageRepository;
 
     @Value("${file.image-extension}")
     private String imageExtension;
@@ -69,6 +78,8 @@ public class FileService {
             saveShopImageInfo(s3Folder, file, id, fileName);
         } else if (s3Folder == S3Folder.MENU) {
             saveMenuImageInfo(s3Folder, file, id, fileName);
+        } else if (s3Folder == S3Folder.REVIEW) {
+            saveReviewImageInfo(s3Folder, file, id, fileName);
         }
     }
 
@@ -116,6 +127,23 @@ public class FileService {
             .menu(menu)
             .build();
         menuImageRepository.save(menuImage);
+    }
+
+    private void saveReviewImageInfo(final S3Folder s3Folder,
+                                     final MultipartFile file,
+                                     final UUID id,
+                                     final String fileName) {
+        Review review = reviewRepository.findByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new CustomException(ReviewErrorCode.REVIEW_NOT_FOUND));
+
+        ReviewImage reviewImage = ReviewImage.builder()
+                .originalFileName(file.getOriginalFilename())
+                .imageUrl(fileName)
+                .fileSize(file.getSize())
+                .s3Folder(s3Folder.getFolderName())
+                .review(review)
+                .build();
+        reviewImageRepository.save(reviewImage);
     }
 
     /**

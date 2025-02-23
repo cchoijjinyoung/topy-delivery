@@ -12,7 +12,7 @@ public class WithCustomMockUserSecurityContextFactory implements WithSecurityCon
     @Override
     public SecurityContext createSecurityContext(WithCustomMockUser member) {
         SecurityContext context = SecurityContextHolder.createEmptyContext();
-        CustomPrincipal principal = new CustomPrincipal(member.id(), member.username());
+        CustomPrincipal principal = new CustomPrincipal(member.username(), member.id(), "CUSTOMER");
         Authentication authentication = new TestingAuthenticationToken(principal, "", "CUSTOMER");
         context.setAuthentication(authentication);
         return context;
