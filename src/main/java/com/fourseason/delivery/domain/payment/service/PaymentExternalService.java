@@ -66,12 +66,12 @@ public class PaymentExternalService {
     /**
      * 결제 취소
      */
-    public String cancelPayment(final CancelPaymentRequestDto cancelPaymentRequestDto, final Payment payment) {
+    public String cancelPayment(final CancelPaymentRequestDto cancelPaymentRequestDto, final String paymentKey) {
         // 취소 요청
         RestClient restClient = RestClient.create();
         try {
             return restClient.post()
-                    .uri("https://api.tosspayments.com//v1/payments/" + payment.getPaymentKey() + "/cancel")
+                    .uri("https://api.tosspayments.com//v1/payments/" + paymentKey + "/cancel")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Authorization", authorizations)
                     .body(cancelPaymentRequestDto)

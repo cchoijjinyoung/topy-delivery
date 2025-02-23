@@ -13,9 +13,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.WebAsyncTask;
 
 import java.net.URI;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/customer/payments")
@@ -59,12 +61,17 @@ public class CustomerPaymentController {
      * 결제 승인 (결제 등록)
      */
     @PostMapping
-    public ResponseEntity<String> confirmPayment (
+    public WebAsyncTask<ResponseEntity<String>> confirmPayment (
             @RequestBody @Valid final CreatePaymentRequestDto createPaymentRequestDto,
             @AuthenticationPrincipal CustomPrincipal customPrincipal
     ) {
-        URI location = paymentService.registerPayment(createPaymentRequestDto, customPrincipal);
-        return ResponseEntity.created(location).build();
+        return new WebAsyncTask<>(() -> {
+            // 비동기 작업 수행
+            CompletableFuture<URI> locationFuture = paymentService.confirmAndRegister(createPaymentRequestDto, customPrincipal);
+            // 결과 대기 및 반환
+            URI location = locationFuture.get();
+            return ResponseEntity.created(location).build();
+        });
     }
 
     /**
