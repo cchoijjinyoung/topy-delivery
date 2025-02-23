@@ -87,15 +87,19 @@ public class AuthController {
     }
 
     //    권한 테스트용
-    @PreAuthorize("!hasRole('ROLE_MASTER')")
+    @PreAuthorize("hasRole('ROLE_MASTER')")
     @GetMapping("/admin")
     public String admin(@AuthenticationPrincipal CustomPrincipal customPrincipal) {
-        return "admin name: " + customPrincipal.getName() + " id: " + customPrincipal.getId();
+        return "admin name: " + customPrincipal.getName() +
+                " id: " + customPrincipal.getId() +
+                " role: " + customPrincipal.getRole();
     }
 
     @GetMapping("/member")
     public String member(@AuthenticationPrincipal CustomPrincipal customPrincipal) {
-        return "member name: " + customPrincipal.getName() + " id: " + customPrincipal.getId();
+        return "member name: " + customPrincipal.getName() +
+                " id: " + customPrincipal.getId() +
+                " role: " + customPrincipal.getRole();
     }
 }
 

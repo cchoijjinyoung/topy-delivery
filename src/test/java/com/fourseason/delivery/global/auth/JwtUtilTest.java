@@ -44,7 +44,6 @@ class JwtUtilTest {
         Claims claims = jwtUtil.validateToken(token);
 
         log.info("access 클레임 확인: {}", claims.toString());
-
         assertNotNull(claims);
         assertEquals("testUser", claims.getSubject());
         assertEquals(3L, claims.get("id", Long.class));
