@@ -40,6 +40,9 @@ jwt:
   refresh-expiration: 7 # Refresh Token: day
   secret: ${JWT_SECRET}
 
+gemini:
+  api:
+    key: ${GEMINI_API_KEY}
 
 file:
   image-extension: jpg, jpeg, png, gif
