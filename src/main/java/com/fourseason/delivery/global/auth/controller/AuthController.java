@@ -1,7 +1,6 @@
 package com.fourseason.delivery.global.auth.controller;
 
 import com.fourseason.delivery.domain.member.entity.Role;
-import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.auth.dto.TokenDto;
 import com.fourseason.delivery.global.auth.dto.request.SignInRequestDto;
 import com.fourseason.delivery.global.auth.dto.request.SignUpRequestDto;
@@ -12,8 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
