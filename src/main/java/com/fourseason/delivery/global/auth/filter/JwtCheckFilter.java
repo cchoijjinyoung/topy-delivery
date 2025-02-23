@@ -38,7 +38,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             "/api/v2/api-docs",
             "/api/swagger-resources",
             "/v3/api-docs",
-            "/api/webjars"
+            "/api/webjars",
             "/page",
             "/css"
     );
