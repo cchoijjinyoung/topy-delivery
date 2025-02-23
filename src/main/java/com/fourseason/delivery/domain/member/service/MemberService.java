@@ -38,15 +38,17 @@ public class MemberService {
 
 
     @Transactional(readOnly = true)
-    public MemberResponseDto getMemberInfo() {
-        Member member = getAuthenticatedMember();
+    public MemberResponseDto getMemberInfo(Long memberId) {
+        Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         return MemberResponseDto.of(member);
     }
 
     @Transactional
-    public MemberResponseDto updateInfo(MemberRequestDto memberRequestDto) {
-        Member member = getAuthenticatedMember();
+    public MemberResponseDto updateInfo(Long memberId, MemberRequestDto memberRequestDto) {
+        Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         member.updateOf(memberRequestDto);
 
@@ -54,8 +56,10 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<ReviewResponseDto> getReviewList() {
-        Member member = getAuthenticatedMember();
+    public List<ReviewResponseDto> getReviewList(Long memberId) {
+        Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
+
 
         List<Review> reviews = reviewRepository.findByMemberAndDeletedAtIsNull(member);
 
@@ -70,18 +74,12 @@ public class MemberService {
     }
 
     @Transactional
-    public void deleteMember() {
-        Member member = getAuthenticatedMember();
+    public void deleteMember(Long memberId) {
+        Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
+
 
         member.deleteOf(member.getUsername());
     }
 
-
-
-    private Member getAuthenticatedMember() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        return memberRepository.findByUsernameAndDeletedAtIsNull(username)
-                .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
-    }
 }
