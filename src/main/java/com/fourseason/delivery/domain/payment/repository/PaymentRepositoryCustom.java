@@ -160,6 +160,8 @@ public class PaymentRepositoryCustom {
         return Optional.ofNullable(jpaQueryFactory
                         .select(payment.count())
                         .from(payment)
+                        .join(order).on(order.id.eq(payment.order.id))  // Payment와 Order 조인
+                        .join(shop).on(shop.id.eq(order.shop.id))  // Order와 Shop 조인
                         .where(getWhereConditions(ownerShop))
                         .fetchOne()
                 )
