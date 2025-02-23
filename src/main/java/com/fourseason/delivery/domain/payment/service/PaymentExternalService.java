@@ -1,7 +1,7 @@
 package com.fourseason.delivery.domain.payment.service;
 
-import com.fourseason.delivery.domain.member.MemberErrorCode;
 import com.fourseason.delivery.domain.member.entity.Member;
+import com.fourseason.delivery.domain.member.exception.MemberErrorCode;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
