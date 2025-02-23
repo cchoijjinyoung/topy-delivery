@@ -8,14 +8,16 @@ import java.security.Principal;
 @RequiredArgsConstructor
 public class CustomPrincipal implements Principal {
 
+    private final String username;
+
     @Getter
     private final Long id;
 
-    private final String username;
+    @Getter
+    private final String role;
 
     @Override
     public String getName() {
         return username;
     }
-
 }

@@ -41,7 +41,7 @@ public class JwtUtil {
 
     public String createAccessToken(String username, Role role, Long id) {
         Map<String, Object> claims = Map.of(
-                "role", role,
+                "role", role.toString(),
                 "id", id);
 
         return generateToken(Duration.ofMinutes(accessExpiration), username, claims);
