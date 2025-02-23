@@ -12,6 +12,7 @@ import com.fourseason.delivery.domain.payment.entity.Payment;
 import com.fourseason.delivery.domain.payment.exception.CustomRestClientException;
 import com.fourseason.delivery.domain.payment.exception.PaymentErrorCode;
 import com.fourseason.delivery.domain.payment.repository.PaymentRepository;
+import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -41,9 +42,9 @@ public class PaymentExternalService {
     /**
      * tossPayment를 통해 결제 승인, payment객체를 받아옴
      */
-    public String confirmPayment(CreatePaymentRequestDto createPaymentRequestDto, String username) {
+    public String confirmPayment(CreatePaymentRequestDto createPaymentRequestDto, CustomPrincipal customPrincipal) {
         // 결제 검증
-        checkConfirm(createPaymentRequestDto, username);
+        checkConfirm(createPaymentRequestDto, customPrincipal.getName());
         // 승인 요청
         RestClient restClient = RestClient.create();
         try {
@@ -64,9 +65,9 @@ public class PaymentExternalService {
     /**
      * 결제 취소
      */
-    public String cancelPayment(UUID paymentId, CancelPaymentRequestDto cancelPaymentRequestDto, String username) {
+    public String cancelPayment(UUID paymentId, CancelPaymentRequestDto cancelPaymentRequestDto, CustomPrincipal customPrincipal) {
         // 취소 검증
-        Payment payment = checkCancel(paymentId, username);
+        Payment payment = checkCancel(paymentId, customPrincipal.getName());
         // 취소 요청
         RestClient restClient = RestClient.create();
         try {
@@ -109,7 +110,7 @@ public class PaymentExternalService {
         Payment payment = paymentRepository.findByIdAndDeletedAtIsNull(paymentId)
                 .orElseThrow(
                         () -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
-        if (!payment.getMember().getId().equals(checkMember(username))) {
+        if (!payment.getMember().getId().equals(checkMember(username).getId())) {
             throw new CustomException(PaymentErrorCode.PAYMENT_FORBIDDEN);
         }
 
