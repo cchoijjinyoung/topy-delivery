@@ -34,7 +34,11 @@ public class JwtCheckFilter extends OncePerRequestFilter {
     private static final List<String> EXCLUDED_PATHS = List.of(
             "/api/sign",
             "/api/api-docs",
-            "/webjars",
+            "/api/swagger-ui",
+            "/api/v2/api-docs",
+            "/api/swagger-resources",
+            "/v3/api-docs",
+            "/api/webjars"
             "/page",
             "/css"
     );
