@@ -38,7 +38,7 @@ public class PaymentController {
             @AuthenticationPrincipal CustomPrincipal customPrincipal
     ) {
         PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderBy);
-        return ResponseEntity.ok(paymentService.findPaymentList(pageRequestDto, customPrincipal.getName()));
+        return ResponseEntity.ok(paymentService.findPaymentList(pageRequestDto, customPrincipal));
     }
 
     /**
@@ -49,7 +49,7 @@ public class PaymentController {
             @PathVariable final UUID paymentId,
             @AuthenticationPrincipal CustomPrincipal customPrincipal
     ) {
-        return ResponseEntity.ok(paymentService.getPayment(paymentId, customPrincipal.getName()));
+        return ResponseEntity.ok(paymentService.getPayment(paymentId, customPrincipal));
     }
 
     /**
@@ -65,16 +65,15 @@ public class PaymentController {
             @RequestBody @Valid final CreatePaymentRequestDto createPaymentRequestDto,
             @AuthenticationPrincipal CustomPrincipal customPrincipal
     ) {
-        String paymentResult = paymentExternalService.confirmPayment(createPaymentRequestDto, customPrincipal.getName());
+        String paymentResult = paymentExternalService.confirmPayment(createPaymentRequestDto, customPrincipal);
         System.out.println(paymentResult);
         // 여기서 결제 db저장 이 처리를 비동기로 처리하는것이 best 실패시 재시도 보정도 좋음
-        URI location = paymentService.registerPayment(paymentResult, customPrincipal.getName());
+        URI location = paymentService.registerPayment(paymentResult, customPrincipal.getId());
         return ResponseEntity.created(location).build();
     }
 
     /**
-     * 결제 취소
-     * 돌려주는 값이 없으므로 204상태 코드를 사용
+     * 결제 취소 고객 기준으로는 order 상태에 따라 결제 취소가 가능하도록 함
      */
     @PutMapping("/{paymentId}")
     public ResponseEntity<Void> cancelPayment(
@@ -82,9 +81,9 @@ public class PaymentController {
             @RequestBody final CancelPaymentRequestDto cancelPaymentRequestDto,
             @AuthenticationPrincipal CustomPrincipal customPrincipal
     ) {
-        String paymentResult = paymentExternalService.cancelPayment(paymentId, cancelPaymentRequestDto, customPrincipal.getName());
+        String paymentResult = paymentExternalService.cancelPayment(paymentId, cancelPaymentRequestDto, customPrincipal);
         System.out.println(paymentResult);
-        URI location = paymentService.cancelPayment(paymentId, paymentResult, customPrincipal.getName());
+        URI location = paymentService.cancelPayment(paymentId, paymentResult, customPrincipal);
         return ResponseEntity.ok().location(location).build();
 
     }
@@ -124,7 +123,7 @@ public class PaymentController {
             @PathVariable final UUID paymentId,
             @AuthenticationPrincipal CustomPrincipal customPrincipal
     ) {
-        paymentService.deletePayment(paymentId, customPrincipal.getName());
+        paymentService.deletePayment(paymentId, customPrincipal);
         return ResponseEntity.noContent().build();
     }
 }
