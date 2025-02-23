@@ -1,7 +1,7 @@
 package com.fourseason.delivery.domain.payment.service;
 
-import com.fourseason.delivery.domain.member.MemberErrorCode;
 import com.fourseason.delivery.domain.member.entity.Member;
+import com.fourseason.delivery.domain.member.exception.MemberErrorCode;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
@@ -12,6 +12,7 @@ import com.fourseason.delivery.domain.payment.entity.Payment;
 import com.fourseason.delivery.domain.payment.exception.CustomRestClientException;
 import com.fourseason.delivery.domain.payment.exception.PaymentErrorCode;
 import com.fourseason.delivery.domain.payment.repository.PaymentRepository;
+import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -41,9 +42,9 @@ public class PaymentExternalService {
     /**
      * tossPayment를 통해 결제 승인, payment객체를 받아옴
      */
-    public String confirmPayment(CreatePaymentRequestDto createPaymentRequestDto, String username) {
+    public String confirmPayment(CreatePaymentRequestDto createPaymentRequestDto, CustomPrincipal customPrincipal) {
         // 결제 검증
-        checkConfirm(createPaymentRequestDto, username);
+        checkConfirm(createPaymentRequestDto, customPrincipal.getId());
         // 승인 요청
         RestClient restClient = RestClient.create();
         try {
@@ -64,9 +65,9 @@ public class PaymentExternalService {
     /**
      * 결제 취소
      */
-    public String cancelPayment(UUID paymentId, CancelPaymentRequestDto cancelPaymentRequestDto, String username) {
+    public String cancelPayment(UUID paymentId, CancelPaymentRequestDto cancelPaymentRequestDto, CustomPrincipal customPrincipal) {
         // 취소 검증
-        Payment payment = checkCancel(paymentId, username);
+        Payment payment = checkCancel(paymentId, customPrincipal.getId());
         // 취소 요청
         RestClient restClient = RestClient.create();
         try {
@@ -88,7 +89,7 @@ public class PaymentExternalService {
     /**
      * 결제 시 검증
      */
-    private void checkConfirm(CreatePaymentRequestDto createPaymentRequestDto, String username){
+    private void checkConfirm(CreatePaymentRequestDto createPaymentRequestDto, Long memberId){
         Order order = orderRepository.findById(createPaymentRequestDto.orderId())
                 .orElseThrow(() ->
                         new CustomException(OrderErrorCode.ORDER_NOT_FOUND)
@@ -96,7 +97,7 @@ public class PaymentExternalService {
         if (order.getMember().getDeletedAt() != null) {
             throw new CustomException(MemberErrorCode.MEMBER_NOT_FOUND);
         }
-        if (!order.getMember().getId().equals(checkMember(username).getId())) {
+        if (!order.getMember().getId().equals(checkMember(memberId).getId())) {
             throw new CustomException(OrderErrorCode.NOT_ORDERED_BY_CUSTOMER);
             // NOT_ORDERED_BY_CUSTOMER forbiden이 맞지 않을까용?
         }
@@ -105,19 +106,19 @@ public class PaymentExternalService {
         }
     }
 
-    private Payment checkCancel(UUID paymentId, String username) {
+    private Payment checkCancel(UUID paymentId, Long memberId) {
         Payment payment = paymentRepository.findByIdAndDeletedAtIsNull(paymentId)
                 .orElseThrow(
                         () -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
-        if (!payment.getMember().getId().equals(checkMember(username))) {
+        if (!payment.getMember().getId().equals(checkMember(memberId).getId())) {
             throw new CustomException(PaymentErrorCode.PAYMENT_FORBIDDEN);
         }
 
         return payment;
     }
 
-    private Member checkMember(final String username) {
-        Member member = memberRepository.findByUsernameAndDeletedAtIsNull(username)
+    private Member checkMember(final Long memberId) {
+        Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
                 .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
         return member;
     }

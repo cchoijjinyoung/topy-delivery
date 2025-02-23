@@ -62,7 +62,9 @@ public class TestInitializer implements CommandLineRunner {
             memberRepository.save(owner);
             System.out.println("Owner account created.");
 
-            Category category = new Category("test");
+            Category category = Category.builder()
+                    .name("test")
+                    .build();
             categoryRepository.save(category);
             System.out.println("Category created");
 

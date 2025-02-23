@@ -2,8 +2,8 @@ package com.fourseason.delivery.domain.payment.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fourseason.delivery.domain.member.MemberErrorCode;
 import com.fourseason.delivery.domain.member.entity.Member;
+import com.fourseason.delivery.domain.member.exception.MemberErrorCode;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
@@ -15,6 +15,7 @@ import com.fourseason.delivery.domain.payment.entity.Payment;
 import com.fourseason.delivery.domain.payment.exception.PaymentErrorCode;
 import com.fourseason.delivery.domain.payment.repository.PaymentRepository;
 import com.fourseason.delivery.domain.payment.repository.PaymentRepositoryCustom;
+import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
@@ -39,17 +40,17 @@ public class PaymentService {
      * 사용자 결제 전체 조회
      */
     @Transactional(readOnly = true)
-    public PageResponseDto<PaymentResponseDto> findPaymentList(final PageRequestDto pageRequestDto, final String username) {
+    public PageResponseDto<PaymentResponseDto> findPaymentList(final PageRequestDto pageRequestDto, final CustomPrincipal customPrincipal) {
 
-        return paymentRepositoryCustom.findPaymentListByMemberWithPage(pageRequestDto, checkMember(username));
+        return paymentRepositoryCustom.findPaymentListByMemberWithPage(pageRequestDto, checkMember(customPrincipal.getId()));
     }
 
     /**
      * 사용자 결제 상세 조회
      */
     @Transactional(readOnly = true)
-    public PaymentResponseDto getPayment(final UUID paymentId, final String username) {
-        Payment payment = checkPayment(paymentId, checkMember(username));
+    public PaymentResponseDto getPayment(final UUID paymentId, final CustomPrincipal customPrincipal) {
+        Payment payment = checkPayment(paymentId, checkMember(customPrincipal.getId()));
 
         return PaymentResponseDto.of(payment);
     }
@@ -58,12 +59,12 @@ public class PaymentService {
      * 결제 등록
      */
     @Transactional
-    public URI registerPayment(final String paymentResult, String username) {
+    public URI registerPayment(final String paymentResult, Long memberId) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             ExternalPaymentDto externalPaymentDto = objectMapper.readValue(paymentResult, ExternalPaymentDto.class);
 
-            Member member = checkMember(username);
+            Member member = checkMember(memberId);
             Order order = checkOrder(externalPaymentDto.orderId(), member);
 
             Payment payment = Payment.addOf(externalPaymentDto, order, member);
@@ -83,9 +84,9 @@ public class PaymentService {
      * 결제 취소
      */
     @Transactional
-    public URI cancelPayment(final UUID paymentId, final String paymentResult, String username) {
+    public URI cancelPayment(final UUID paymentId, final String paymentResult, CustomPrincipal customPrincipal) {
         try {
-            Payment payment = checkPayment(paymentId, checkMember(username));
+            Payment payment = checkPayment(paymentId, checkMember(customPrincipal.getId()));
 
             ObjectMapper objectMapper = new ObjectMapper();
             ExternalCancelPaymentDto externalCancelPaymentDto = objectMapper.readValue(paymentResult, ExternalCancelPaymentDto.class);
@@ -126,10 +127,10 @@ public class PaymentService {
      * 결제 삭제
      */
     @Transactional
-    public void deletePayment(final UUID paymentId, final String username) {
+    public void deletePayment(final UUID paymentId, final CustomPrincipal customPrincipal) {
         Payment payment = checkPayment(paymentId);
 
-        payment.deleteOf(username);
+        payment.deleteOf(customPrincipal.getName());
     }
 
     /**
@@ -163,8 +164,8 @@ public class PaymentService {
                 .orElseThrow(() -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
     }
 
-    private Member checkMember(final String username) {
-        Member member = memberRepository.findByUsernameAndDeletedAtIsNull(username)
+    private Member checkMember(final Long memberId) {
+        Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
                 .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
         return member;
     }
