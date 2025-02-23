@@ -5,6 +5,7 @@ import com.fourseason.delivery.domain.payment.service.PaymentService;
 import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
+import com.fourseason.delivery.global.resolver.PageSize;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -27,7 +28,7 @@ public class AdminPaymentController {
     @GetMapping
     public ResponseEntity<PageResponseDto<PaymentResponseDto>> getPaymentList(
             @RequestParam(defaultValue = "1") final int page,
-            @RequestParam(defaultValue = "10") final int size,
+            @PageSize final int size,
             @RequestParam(defaultValue = "latest") final String orderBy
     ) {
         PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderBy);

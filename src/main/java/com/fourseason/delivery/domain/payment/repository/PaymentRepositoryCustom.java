@@ -5,16 +5,19 @@ import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.payment.dto.response.PaymentResponseDto;
 import com.fourseason.delivery.domain.payment.exception.PaymentErrorCode;
 import com.fourseason.delivery.domain.shop.entity.Shop;
+import com.fourseason.delivery.domain.shop.exception.ShopErrorCode;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +38,16 @@ public class PaymentRepositoryCustom {
     public PageResponseDto<PaymentResponseDto> findPaymentListWithPage(final PageRequestDto pageRequestDto) {
         List<PaymentResponseDto> content = getPaymentList(pageRequestDto);
         long total = getTotalDataCount();
+
+        return new PageResponseDto<>(content, total);
+    }
+
+    /**
+     * 관리자 결제 검색
+     */
+    public PageResponseDto<PaymentResponseDto> searchPaymentListWithPage(final PageRequestDto pageRequestDto, final String keyword) {
+        List<PaymentResponseDto> content = getPaymentList(pageRequestDto, keyword);
+        long total = getTotalDataCount(keyword);
 
         return new PageResponseDto<>(content, total);
     }
@@ -75,6 +88,28 @@ public class PaymentRepositoryCustom {
                         ))
                 .from(payment)
                 .where(getWhereConditions())
+                .offset(pageRequestDto.getFirstIndex())
+                .limit(pageRequestDto.getSize())
+                .orderBy(getOrderConditions(pageRequestDto))
+                .fetch();
+    }
+
+    /**
+     * 관리자 검색 메서드
+     */
+    private List<PaymentResponseDto> getPaymentList(final PageRequestDto pageRequestDto, final String keyword) {
+        return jpaQueryFactory
+                .select(Projections.constructor(PaymentResponseDto.class,
+                        payment.id,
+                        payment.paymentKey,
+                        payment.paymentAmount,
+                        payment.paymentMethod,
+                        payment.paymentStatus,
+                        payment.cancelReason,
+                        payment.balanceAmount
+                ))
+                .from(payment)
+                .where(getWhereConditions(keyword))
                 .offset(pageRequestDto.getFirstIndex())
                 .limit(pageRequestDto.getSize())
                 .orderBy(getOrderConditions(pageRequestDto))
@@ -128,13 +163,26 @@ public class PaymentRepositoryCustom {
     }
 
     /**
-     * 전체 데이터 수 조회
+     * 전체 데이터 수 조회 admin
      */
     private long getTotalDataCount() {
         return Optional.ofNullable(jpaQueryFactory
                         .select(payment.count())
                         .from(payment)
                         .where(getWhereConditions())
+                        .fetchOne()
+                )
+                .orElse(0L);
+    }
+
+    /**
+     * 전체 데이터 수 조회 admin-search
+     */
+    private long getTotalDataCount(final String keyword) {
+        return Optional.ofNullable(jpaQueryFactory
+                        .select(payment.count())
+                        .from(payment)
+                        .where(getWhereConditions(keyword))
                         .fetchOne()
                 )
                 .orElse(0L);
@@ -169,13 +217,31 @@ public class PaymentRepositoryCustom {
     }
 
     /**
-     * 조회 조건
+     * 조회 조건 admin
      */
-    // wherecondition이 필요없는 경우나 pageRequestDto가 필요 없는 부분에 대한 의문
     private BooleanBuilder getWhereConditions() {
         BooleanBuilder builder = new BooleanBuilder();
 
         return builder.and(payment.deletedAt.isNull());
+
+    }
+
+    /**
+     * 조회 조건 admin search
+     */
+    private BooleanBuilder getWhereConditions(final String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            throw new CustomException(PaymentErrorCode.NO_KEYWORD);
+        }
+
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(payment.deletedAt.isNull());
+
+        BooleanExpression keywordCondition = payment.paymentKey.containsIgnoreCase(keyword);
+
+        builder.and(keywordCondition);
+
+        return builder;
 
     }
 
