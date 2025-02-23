@@ -49,7 +49,12 @@ public class ReviewService {
             throw new CustomException(ReviewErrorCode.ORDER_NOT_COMPLETED);
         }
 
-        // 3) Review 저장
+        // 3) 기존 리뷰가 있는지 확인
+        if(reviewRepository.findByOrderIdAndDeletedAtIsNull(orderId) != null) {
+            throw new CustomException(ReviewErrorCode.REVIEW_ALREADY_EXISTS);
+        }
+
+        // 4) Review 저장
         Review review = Review.addOf(reviewRequestDto, order);
         reviewRepository.save(review);
 
