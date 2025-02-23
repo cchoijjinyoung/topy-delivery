@@ -44,7 +44,7 @@ public class PaymentExternalService {
      */
     public String confirmPayment(CreatePaymentRequestDto createPaymentRequestDto, CustomPrincipal customPrincipal) {
         // 결제 검증
-        checkConfirm(createPaymentRequestDto, customPrincipal.getName());
+        checkConfirm(createPaymentRequestDto, customPrincipal.getId());
         // 승인 요청
         RestClient restClient = RestClient.create();
         try {
@@ -67,7 +67,7 @@ public class PaymentExternalService {
      */
     public String cancelPayment(UUID paymentId, CancelPaymentRequestDto cancelPaymentRequestDto, CustomPrincipal customPrincipal) {
         // 취소 검증
-        Payment payment = checkCancel(paymentId, customPrincipal.getName());
+        Payment payment = checkCancel(paymentId, customPrincipal.getId());
         // 취소 요청
         RestClient restClient = RestClient.create();
         try {
@@ -89,7 +89,7 @@ public class PaymentExternalService {
     /**
      * 결제 시 검증
      */
-    private void checkConfirm(CreatePaymentRequestDto createPaymentRequestDto, String username){
+    private void checkConfirm(CreatePaymentRequestDto createPaymentRequestDto, Long memberId){
         Order order = orderRepository.findById(createPaymentRequestDto.orderId())
                 .orElseThrow(() ->
                         new CustomException(OrderErrorCode.ORDER_NOT_FOUND)
@@ -97,7 +97,7 @@ public class PaymentExternalService {
         if (order.getMember().getDeletedAt() != null) {
             throw new CustomException(MemberErrorCode.MEMBER_NOT_FOUND);
         }
-        if (!order.getMember().getId().equals(checkMember(username).getId())) {
+        if (!order.getMember().getId().equals(checkMember(memberId).getId())) {
             throw new CustomException(OrderErrorCode.NOT_ORDERED_BY_CUSTOMER);
             // NOT_ORDERED_BY_CUSTOMER forbiden이 맞지 않을까용?
         }
@@ -106,19 +106,19 @@ public class PaymentExternalService {
         }
     }
 
-    private Payment checkCancel(UUID paymentId, String username) {
+    private Payment checkCancel(UUID paymentId, Long memberId) {
         Payment payment = paymentRepository.findByIdAndDeletedAtIsNull(paymentId)
                 .orElseThrow(
                         () -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
-        if (!payment.getMember().getId().equals(checkMember(username).getId())) {
+        if (!payment.getMember().getId().equals(checkMember(memberId).getId())) {
             throw new CustomException(PaymentErrorCode.PAYMENT_FORBIDDEN);
         }
 
         return payment;
     }
 
-    private Member checkMember(final String username) {
-        Member member = memberRepository.findByUsernameAndDeletedAtIsNull(username)
+    private Member checkMember(final Long memberId) {
+        Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
                 .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
         return member;
     }
