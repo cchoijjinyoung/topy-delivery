@@ -28,13 +28,13 @@ public class Address extends BaseTimeEntity {
     @Column(nullable = false)
     private String detailAddress;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "member_id")
     private Member member;
 
     @Builder
     public Address(String address, String detailAddress, Member member) {
-        this.address = detailAddress;
+        this.address = address;
         this.detailAddress = detailAddress;
         this.member = member;
     }
