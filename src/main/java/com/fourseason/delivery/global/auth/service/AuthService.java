@@ -41,7 +41,7 @@ public class AuthService {
 
     public TokenDto signIn(SignInRequestDto request) {
         Member member = memberRepository.findByUsername(request.username())
-                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(MEMBER_UNAUTHORIZED));
 
         if (!passwordEncoder.matches(request.password(), member.getPassword())) {
             throw new CustomException(MEMBER_INVALID_CREDENTIAL);
@@ -68,7 +68,7 @@ public class AuthService {
                 //  Refresh 가 필요한 상황
                 Claims claims = jwtUtil.validateToken(refreshToken);
                 Member member = memberRepository.findById(claims.get("id", Long.class))
-                        .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
+                        .orElseThrow(() -> new CustomException(MEMBER_UNAUTHORIZED));
 
                 // access token 생성, refresh token 은 따로 관리하지 않아 재 생성 시 기존 토큰을 삭제할 수 없으므로
                 // refresh token 재발급은 하지 않음. (추후 관리 가능한 방법으로..)
