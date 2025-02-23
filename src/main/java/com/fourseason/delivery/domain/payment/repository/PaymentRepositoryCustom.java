@@ -4,6 +4,7 @@ package com.fourseason.delivery.domain.payment.repository;
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.payment.dto.response.PaymentResponseDto;
 import com.fourseason.delivery.domain.payment.exception.PaymentErrorCode;
+import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
@@ -19,6 +20,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.fourseason.delivery.domain.payment.entity.QPayment.payment;
+import static com.fourseason.delivery.domain.order.entity.QOrder.order;
+import static com.fourseason.delivery.domain.shop.entity.QShop.shop;
 
 @Repository
 @RequiredArgsConstructor
@@ -42,6 +45,16 @@ public class PaymentRepositoryCustom {
     public PageResponseDto<PaymentResponseDto> findPaymentListByMemberWithPage(final PageRequestDto pageRequestDto, final Member member) {
         List<PaymentResponseDto> content = getPaymentList(pageRequestDto, member);
         long total = getTotalDataCount(member);
+
+        return new PageResponseDto<>(content, total);
+    }
+
+    /**
+     * 가게주인 결제 전체 조회
+     */
+    public PageResponseDto<PaymentResponseDto> findPaymentListByShopWithPage(final PageRequestDto pageRequestDto, final Shop shop) {
+        List<PaymentResponseDto> content = getPaymentList(pageRequestDto, shop);
+        long total = getTotalDataCount(shop);
 
         return new PageResponseDto<>(content, total);
     }
@@ -91,6 +104,30 @@ public class PaymentRepositoryCustom {
     }
 
     /**
+     * 가게주인 페이징 조회 메서드
+     */
+    private List<PaymentResponseDto> getPaymentList(final PageRequestDto pageRequestDto, final Shop ownerShop) {
+        return jpaQueryFactory
+                .select(Projections.constructor(PaymentResponseDto.class,
+                        payment.id,
+                        payment.paymentKey,
+                        payment.paymentAmount,
+                        payment.paymentMethod,
+                        payment.paymentStatus,
+                        payment.cancelReason,
+                        payment.balanceAmount
+                ))
+                .from(payment)
+                .join(order).on(order.id.eq(payment.order.id))  // Payment와 Order 조인
+                .join(shop).on(shop.id.eq(order.shop.id))  // Order와 Shop 조인
+                .where(shop.id.eq(ownerShop.getId()))  // Shop 기준으로 필터링
+                .offset(pageRequestDto.getFirstIndex())
+                .limit(pageRequestDto.getSize())
+                .orderBy(getOrderConditions(pageRequestDto))
+                .fetch();
+    }
+
+    /**
      * 전체 데이터 수 조회
      */
     private long getTotalDataCount() {
@@ -117,6 +154,19 @@ public class PaymentRepositoryCustom {
     }
 
     /**
+     * 전체 데이터 수 조회 - shop
+     */
+    private long getTotalDataCount(final Shop ownerShop) {
+        return Optional.ofNullable(jpaQueryFactory
+                        .select(payment.count())
+                        .from(payment)
+                        .where(getWhereConditions(ownerShop))
+                        .fetchOne()
+                )
+                .orElse(0L);
+    }
+
+    /**
      * 조회 조건
      */
     // wherecondition이 필요없는 경우나 pageRequestDto가 필요 없는 부분에 대한 의문
@@ -133,6 +183,17 @@ public class PaymentRepositoryCustom {
     private BooleanBuilder getWhereConditions(final Member member) {
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(payment.member.id.eq(member.getId()));
+        builder.and(payment.deletedAt.isNull());
+
+        return builder;
+    }
+
+    /**
+     * 조회 조건 - shop
+     */
+    private BooleanBuilder getWhereConditions(final Shop ownerShop) {
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(shop.id.eq(ownerShop.getId()));
         builder.and(payment.deletedAt.isNull());
 
         return builder;
