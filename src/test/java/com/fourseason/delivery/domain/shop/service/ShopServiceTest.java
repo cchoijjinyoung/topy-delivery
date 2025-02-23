@@ -11,8 +11,8 @@ import static org.mockito.Mockito.times;
 
 import com.fourseason.delivery.domain.image.enums.S3Folder;
 import com.fourseason.delivery.domain.image.service.FileService;
-import com.fourseason.delivery.domain.member.MemberErrorCode;
 import com.fourseason.delivery.domain.member.entity.Member;
+import com.fourseason.delivery.domain.member.exception.MemberErrorCode;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.shop.dto.request.CreateShopRequestDto;
 import com.fourseason.delivery.domain.shop.dto.response.ShopResponseDto;
