@@ -6,6 +6,7 @@ import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.resolver.PageSize;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -32,7 +33,22 @@ public class AdminPaymentController {
             @RequestParam(defaultValue = "latest") final String orderBy
     ) {
         PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderBy);
-        return ResponseEntity.ok(paymentService.findPaymentListForCustomer(pageRequestDto));
+        return ResponseEntity.ok(paymentService.findPaymentListForAdmin(pageRequestDto));
+    }
+
+    /**
+     * 관리자 결제 전체 검색
+     */
+    @Secured({"ROLE_MANAGER", "ROLE_ADMIN"})
+    @GetMapping("/search")
+    public ResponseEntity<PageResponseDto<PaymentResponseDto>> searchPaymentList(
+            @RequestParam @NotBlank(message = "검색어를 입력해주세요.") String keyword,
+            @RequestParam(defaultValue = "1") final int page,
+            @PageSize final int size,
+            @RequestParam(defaultValue = "latest") final String orderBy
+    ) {
+        PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderBy);
+        return ResponseEntity.ok(paymentService.searchPaymentListForAdmin(pageRequestDto, keyword));
     }
 
     /**

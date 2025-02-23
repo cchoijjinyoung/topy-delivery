@@ -147,9 +147,18 @@ public class PaymentService {
      * 관리자 결제 전체 조회
      */
     @Transactional(readOnly = true)
-    public PageResponseDto<PaymentResponseDto> findPaymentListForCustomer(final PageRequestDto pageRequestDto) {
+    public PageResponseDto<PaymentResponseDto> findPaymentListForAdmin(final PageRequestDto pageRequestDto) {
 
         return paymentRepositoryCustom.findPaymentListWithPage(pageRequestDto);
+    }
+
+    /**
+     * 관리자 결제 전체 조회
+     */
+    @Transactional(readOnly = true)
+    public PageResponseDto<PaymentResponseDto> searchPaymentListForAdmin(final PageRequestDto pageRequestDto, String keyword) {
+
+        return paymentRepositoryCustom.searchPaymentListWithPage(pageRequestDto, keyword);
     }
 
     /**
