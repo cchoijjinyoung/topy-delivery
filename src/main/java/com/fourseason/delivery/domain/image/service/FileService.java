@@ -78,6 +78,8 @@ public class FileService {
             saveShopImageInfo(s3Folder, file, id, fileName);
         } else if (s3Folder == S3Folder.MENU) {
             saveMenuImageInfo(s3Folder, file, id, fileName);
+        } else if (s3Folder == S3Folder.REVIEW) {
+            saveReviewImageInfo(s3Folder, file, id, fileName);
         }
     }
 
