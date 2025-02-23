@@ -4,7 +4,6 @@ import com.fourseason.delivery.domain.image.enums.S3Folder;
 import com.fourseason.delivery.domain.image.service.FileService;
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.entity.Role;
-import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderStatus;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
@@ -35,8 +34,7 @@ public class ReviewService {
     private final ReviewImageRepository reviewImageRepository;
     private final OrderRepository orderRepository;
     private final ShopRepository shopRepository;
-    private final ReviewImageService reviewImageService;
-
+    private final FileService fileService;
 
 
     @Transactional
@@ -50,14 +48,19 @@ public class ReviewService {
             throw new CustomException(ReviewErrorCode.ORDER_NOT_COMPLETED);
         }
 
-        // 3) Review 저장
+        // 3) 기존 리뷰가 있는지 확인
+        if(reviewRepository.findByOrderIdAndDeletedAtIsNull(orderId) != null) {
+            throw new CustomException(ReviewErrorCode.REVIEW_ALREADY_EXISTS);
+        }
+
+        // 4) Review 저장
         Review review = Review.addOf(reviewRequestDto, order);
         reviewRepository.save(review);
 
         // 4) 이미지 업로드, ReviewImage 저장
         if(images != null && !images.isEmpty()) {
             for(MultipartFile image : images) {
-                reviewImageService.saveImageFile(S3Folder.REVIEW, image, review.getId());
+                fileService.saveImageFile(S3Folder.REVIEW, image, review.getId());
             }
         }
     }
@@ -97,7 +100,7 @@ public class ReviewService {
         // 3) 새로운 이미지 추가
         if(images != null && !images.isEmpty()) {
             for(MultipartFile image : images) {
-                reviewImageService.saveImageFile(S3Folder.REVIEW, image, review.getId());
+                fileService.saveImageFile(S3Folder.REVIEW, image, review.getId());
             }
         }
         List<ReviewImage> newImages = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(reviewId);
