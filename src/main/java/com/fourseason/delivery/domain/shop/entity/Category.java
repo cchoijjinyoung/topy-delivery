@@ -2,6 +2,7 @@ package com.fourseason.delivery.domain.shop.entity;
 
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import org.hibernate.annotations.UuidGenerator;
 
@@ -19,11 +20,9 @@ public class Category extends BaseTimeEntity {
     @Column(nullable = false)
     private String name;
 
-    public Category(String name) {
+    @Builder
+    private Category(String name) {
         this.name = name;
     }
 
-    public Category() {
-
-    }
 }

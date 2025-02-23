@@ -2,9 +2,11 @@ package com.fourseason.delivery.domain.shop.service;
 
 import com.fourseason.delivery.domain.image.enums.S3Folder;
 import com.fourseason.delivery.domain.image.service.FileService;
+import com.fourseason.delivery.domain.member.MemberErrorCode;
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.entity.Role;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
+import com.fourseason.delivery.domain.menu.exception.MenuErrorCode;
 import com.fourseason.delivery.domain.shop.dto.request.CreateShopRequestDto;
 import com.fourseason.delivery.domain.shop.dto.request.UpdateShopRequestDto;
 import com.fourseason.delivery.domain.shop.dto.response.ShopResponseDto;
@@ -62,13 +64,12 @@ public class ShopService {
     }
 
     @Transactional
-    public void registerShop(CreateShopRequestDto createShopRequestDto, List<MultipartFile> images) {
-        // TODO: 현재 임시 유저를 넣었음. 이후 수정 필요.
-        Member member = memberRepository.findById(1L)
-            .orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다."));
+    public void registerShop(CreateShopRequestDto createShopRequestDto, List<MultipartFile> images, final Long memberId) {
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         Category category = categoryRepository.findByName(createShopRequestDto.category())
-                .orElseThrow(() -> new CustomException(ShopErrorCode.CATEGORY_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(ShopErrorCode.CATEGORY_NOT_FOUND));
 
         Shop shop = Shop.addOf(createShopRequestDto, member, category);
         shopRepository.save(shop);
@@ -90,12 +91,12 @@ public class ShopService {
     }
 
     @Transactional
-    public void deleteShop(final UUID id) {
+    public void deleteShop(final UUID id, final Long memberId) {
         Shop shop = shopRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ShopErrorCode.SHOP_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(ShopErrorCode.SHOP_NOT_FOUND));
 
-        // TODO: 현재 임시 유저를 넣었음. 이후 수정 필요.
-        Member member = new Member("유저", "user@example.com", "1234", "010-0000-0000", Role.CUSTOMER);
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         shop.deleteOf(member.getUsername());
     }

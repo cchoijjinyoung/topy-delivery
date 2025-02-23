@@ -40,7 +40,7 @@ public class MenuImage extends BaseTimeEntity {
     private Menu menu;
 
     @Builder
-    public MenuImage(String imageUrl, String originalFileName, long fileSize, String s3Folder, Menu menu) {
+    private MenuImage(String imageUrl, String originalFileName, long fileSize, String s3Folder, Menu menu) {
         this.imageUrl = imageUrl;
         this.originalFileName = originalFileName;
         this.fileSize = fileSize;
