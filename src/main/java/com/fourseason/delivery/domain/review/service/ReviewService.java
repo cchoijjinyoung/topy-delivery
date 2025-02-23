@@ -35,8 +35,7 @@ public class ReviewService {
     private final ReviewImageRepository reviewImageRepository;
     private final OrderRepository orderRepository;
     private final ShopRepository shopRepository;
-    private final ReviewImageService reviewImageService;
-
+    private final FileService fileService;
 
 
     @Transactional
@@ -57,7 +56,7 @@ public class ReviewService {
         // 4) 이미지 업로드, ReviewImage 저장
         if(images != null && !images.isEmpty()) {
             for(MultipartFile image : images) {
-                reviewImageService.saveImageFile(S3Folder.REVIEW, image, review.getId());
+                fileService.saveImageFile(S3Folder.REVIEW, image, review.getId());
             }
         }
     }
@@ -97,7 +96,7 @@ public class ReviewService {
         // 3) 새로운 이미지 추가
         if(images != null && !images.isEmpty()) {
             for(MultipartFile image : images) {
-                reviewImageService.saveImageFile(S3Folder.REVIEW, image, review.getId());
+                fileService.saveImageFile(S3Folder.REVIEW, image, review.getId());
             }
         }
         List<ReviewImage> newImages = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(reviewId);
