@@ -56,8 +56,11 @@ public class GlobalExceptionHandler {
      * Handle CustomRestClientException
      */
     @ExceptionHandler(CustomRestClientException.class)
-    public ResponseEntity<String> handleCustomRestClientException(CustomRestClientException e) {
+    public ResponseEntity<ErrorResponseEntity> handleCustomRestClientException(CustomRestClientException e) {
         return ResponseEntity.status(e.getStatusCode())
-                .body(e.getMessage());
+                .body(ErrorResponseEntity.builder()
+                        .status(e.getStatusCode().value())
+                        .message(e.getMessage())
+                        .build());
     }
 }

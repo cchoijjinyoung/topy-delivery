@@ -1,7 +1,5 @@
 package com.fourseason.delivery.domain.payment.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.exception.MemberErrorCode;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
@@ -9,8 +7,6 @@ import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderStatus;
 import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
-import com.fourseason.delivery.domain.payment.dto.external.ExternalCancelPaymentDto;
-import com.fourseason.delivery.domain.payment.dto.external.ExternalPaymentDto;
 import com.fourseason.delivery.domain.payment.dto.request.CancelPaymentRequestDto;
 import com.fourseason.delivery.domain.payment.dto.request.CreatePaymentRequestDto;
 import com.fourseason.delivery.domain.payment.dto.response.PaymentResponseDto;
@@ -130,30 +126,22 @@ public class PaymentService {
     }
 
     /**
-     * 결제 취소 TODO: 절차 진행 순서를 잘 생각해 보면 db저장 먼저 하고 이후 결제 취소 시도 만일 결제 취소중 문제 발생하면 rollback하면 그만
+     * 결제 취소
      */
     @Transactional
     public URI cancelPayment(final CancelPaymentRequestDto cancelPaymentRequestDto, Payment payment) {
+        // 취소로 변경
+        payment.cancelOf(cancelPaymentRequestDto);
         // 취소 요청
         String paymentResult = paymentExternalService.cancelPayment(cancelPaymentRequestDto, payment.getPaymentKey());
         System.out.println(paymentResult);
-        // 취소 결과 mapping후 저장 TODO: (이부분을 비동기 처리 할 것)
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            ExternalCancelPaymentDto externalCancelPaymentDto = objectMapper.readValue(paymentResult, ExternalCancelPaymentDto.class);
 
-            payment.cancelOf(externalCancelPaymentDto);
-
-            return ServletUriComponentsBuilder
-                    .fromCurrentRequest()
-                    .path("/{id}")
-                    .buildAndExpand(payment.getId())
-                    .toUri();
-        } catch (JsonProcessingException e) {
-            throw new CustomException(PaymentErrorCode.PAYMENT_MAPPING_FAIL);
-        }
+        return ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(payment.getId())
+                .toUri();
     }
-
 
     /**
      * 관리자 결제 전체 조회
