@@ -1,5 +1,6 @@
-package com.fourseason.delivery.domain.order.dto.response;
+package com.fourseason.delivery.domain.order.dto.response.impl;
 
+import com.fourseason.delivery.domain.order.dto.response.OrderSummaryResponseDto;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderMenu;
 import com.fourseason.delivery.domain.order.entity.OrderStatus;
@@ -18,7 +19,7 @@ public record OwnerOrderSummaryResponseDto(
     LocalDateTime createdAt,
     LocalDateTime updatedAt,
     String updatedBy
-) {
+) implements OrderSummaryResponseDto {
 
   @QueryProjection
   public OwnerOrderSummaryResponseDto(Order order) {
