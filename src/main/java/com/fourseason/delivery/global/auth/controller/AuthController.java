@@ -27,6 +27,9 @@ public class AuthController {
 
     private final AuthService authService;
 
+    /**
+     * 회원 가입 API
+     */
     @PostMapping("/sign-up")
     public ResponseEntity<Void> signUp(
             @RequestBody @Valid SignUpRequestDto request
@@ -47,6 +50,9 @@ public class AuthController {
         return ResponseEntity.created(location).build();
     }
 
+    /**
+     * Access, Refresh Token 발행 API
+     */
     @PostMapping("/sign-in")
     public ResponseEntity<Void> signIn(
             @RequestBody SignInRequestDto request
@@ -58,7 +64,9 @@ public class AuthController {
                 .build();
     }
 
-    // refresh token 요청 경로, filter 에서 체크되지 않도록 /api/sign
+    /**
+     * Refresh Token 을 활용한 Access Token 재발행 API
+     */
     @PostMapping("/sign-refresh")
     public ResponseEntity<Void> refreshToken(
             @RequestHeader("Authorization") String accessToken,
@@ -76,6 +84,9 @@ public class AuthController {
                 .build();
     }
 
+    /**
+     * OWNER, MANAGER 멤버 추가를 위한 MASTER 용 sign-up API
+     */
     @Secured("ROLE_MASTER")
     @PostMapping("/admin/sign-up")
     @ResponseStatus(HttpStatus.CREATED)
@@ -84,22 +95,6 @@ public class AuthController {
     ) {
         authService.signUp(request);
         return request.role() + " member 생셩.";
-    }
-
-    //    권한 테스트용
-    @PreAuthorize("hasRole('ROLE_MASTER')")
-    @GetMapping("/admin")
-    public String admin(@AuthenticationPrincipal CustomPrincipal customPrincipal) {
-        return "admin name: " + customPrincipal.getName() +
-                " id: " + customPrincipal.getId() +
-                " role: " + customPrincipal.getRole();
-    }
-
-    @GetMapping("/member")
-    public String member(@AuthenticationPrincipal CustomPrincipal customPrincipal) {
-        return "member name: " + customPrincipal.getName() +
-                " id: " + customPrincipal.getId() +
-                " role: " + customPrincipal.getRole();
     }
 }
 
