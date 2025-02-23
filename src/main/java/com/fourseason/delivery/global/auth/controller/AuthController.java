@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -85,9 +86,8 @@ public class AuthController {
         return request.role() + " member 생셩.";
     }
 
-    // TODO: 테스트 코드로 이동...
     //    권한 테스트용
-    @Secured("ROLE_MASTER")
+    @PreAuthorize("!hasRole('ROLE_MASTER')")
     @GetMapping("/admin")
     public String admin(@AuthenticationPrincipal CustomPrincipal customPrincipal) {
         return "admin name: " + customPrincipal.getName() + " id: " + customPrincipal.getId();

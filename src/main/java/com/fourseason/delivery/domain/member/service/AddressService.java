@@ -29,8 +29,9 @@ public class AddressService {
 
 
     @Transactional(readOnly = true)
-    public List<AddressAddResponseDto> getAddressList() {
-        Member member = getAuthenticatedMember();
+    public List<AddressAddResponseDto> getAddressList(Long memberId) {
+        Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         List<Address> addresses = addressRepository.findByMemberAndDeletedAtIsNull(member);
 
@@ -40,8 +41,10 @@ public class AddressService {
     }
 
     @Transactional
-    public AddressAddResponseDto addAddress(AddressAddRequestDto addressAddRequestDto) {
-        Member member = getAuthenticatedMember();
+    public AddressAddResponseDto addAddress(Long memberId, AddressAddRequestDto addressAddRequestDto) {
+        Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
+
 
         Address address = Address.addOf(addressAddRequestDto, member);
         Address savedAddress = addressRepository.save(address);
@@ -50,8 +53,10 @@ public class AddressService {
     }
 
     @Transactional
-    public AddressUpdateResponseDto updateAddress(UUID addressId, AddressUpdateRequestDto addressUpdateRequestDto) {
-        Member member = getAuthenticatedMember();
+    public AddressUpdateResponseDto updateAddress(Long memberId, UUID addressId, AddressUpdateRequestDto addressUpdateRequestDto) {
+        Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
+
 
         Address address = addressRepository.findByIdAndDeletedAtIsNull(addressId)
                 .orElseThrow(() -> new CustomException(AddressErrorCode.ADDRESS_NOT_FOUND));
@@ -66,8 +71,10 @@ public class AddressService {
     }
 
     @Transactional
-    public void deleteAddress(UUID addressId) {
-        Member member = getAuthenticatedMember();
+    public void deleteAddress(Long memberId, UUID addressId) {
+        Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
+
 
         Address address = addressRepository.findByIdAndDeletedAtIsNull(addressId)
                 .orElseThrow(() -> new CustomException(AddressErrorCode.ADDRESS_NOT_FOUND));
@@ -77,13 +84,5 @@ public class AddressService {
         }
 
         address.deleteOf(member.getUsername());
-    }
-
-
-    private Member getAuthenticatedMember() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        return memberRepository.findByUsernameAndDeletedAtIsNull(username)
-                .orElseThrow(() -> new CustomException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 }
