@@ -132,8 +132,8 @@ API Statistics
 <br>
 
 ### 2) Redis를 활용한 Refesh Token 관리
-- 문제점 :
-- 개선 계획 : 
+- 문제점 : Refresh Token 발행 후 관리 문제(현재는 서버에 저장하고 있지 않음)
+- 개선 계획 : 다양한 저장 방법이 있지만 TTL(자동 만료). In-Memory DB의 강점(보안, 속도), 분산 서버 환경에서도 공유된 Redis를 사용한 토큰 관리 등의 장점이 있는 Redis를 활용해 Refresh Token을 관리 
 <br>
 
 ### 3) 통합테스트
