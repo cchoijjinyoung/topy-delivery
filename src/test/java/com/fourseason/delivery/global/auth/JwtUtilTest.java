@@ -3,7 +3,6 @@ package com.fourseason.delivery.global.auth;
 import com.fourseason.delivery.domain.member.entity.Role;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -28,7 +27,6 @@ class JwtUtilTest {
         jwtUtil = new JwtUtil(secret, issuer, accessExpiration, refreshExpiration);
     }
 
-    @Disabled
     @Test
     @DisplayName("토큰 생성 확인")
     void createToken() {
