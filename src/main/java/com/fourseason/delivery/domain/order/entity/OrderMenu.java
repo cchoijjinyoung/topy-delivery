@@ -42,20 +42,25 @@ public class OrderMenu extends BaseTimeEntity {
   @Column(nullable = false)
   private int quantity;
 
+  @Column(nullable = false)
+  private int totalPrice;
+
   public static OrderMenu addOf(Menu menu, int quantity) {
     return OrderMenu.builder()
         .menu(menu)
         .name(menu.getName())
         .price(menu.getPrice())
         .quantity(quantity)
+        .totalPrice(menu.getPrice() * quantity)
         .build();
   }
 
   @Builder
-  private OrderMenu(Menu menu, String name, int quantity, int price) {
+  private OrderMenu(Menu menu, String name, int quantity, int price, int totalPrice) {
     this.menu = menu;
     this.name = name;
     this.price = price;
     this.quantity = quantity;
+    this.totalPrice = totalPrice;
   }
 }

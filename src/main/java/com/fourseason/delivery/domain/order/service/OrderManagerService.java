@@ -49,12 +49,15 @@ public class OrderManagerService implements OrderRoleService {
     List<OrderMenu> orderMenuList = orderMenuListBuilder.create(
         request.toOrderCreateDto(shop, customer));
 
-    Order createOrder = Order.addByCustomer(
+    Order createOrder = Order.addByManager(
         shop,
         customer,
         request.address(),
         request.instruction(),
-        orderMenuList);
+        orderMenuList,
+        request.orderStatus(),
+        request.orderType());
+
     return orderRepository.save(createOrder).getId();
   }
 
