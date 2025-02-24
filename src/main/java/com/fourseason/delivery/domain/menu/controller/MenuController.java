@@ -6,6 +6,7 @@ import com.fourseason.delivery.domain.menu.dto.response.MenuResponseDto;
 import com.fourseason.delivery.domain.menu.service.MenuService;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
+import com.fourseason.delivery.global.resolver.PageSize;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class MenuController {
     @GetMapping
     public ResponseEntity<PageResponseDto<MenuResponseDto>> getMenuList(@RequestParam UUID shopId,
                                                                         @RequestParam(defaultValue = "1") int page,
-                                                                        @RequestParam(defaultValue = "10") int size,
+                                                                        @PageSize int size,
                                                                         @RequestParam(defaultValue = "latest") String orderBy) {
         PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderBy);
         return ResponseEntity.ok(menuService.getMenuList(shopId, pageRequestDto));
@@ -79,7 +80,7 @@ public class MenuController {
     public ResponseEntity<PageResponseDto<MenuResponseDto>> searchMenu(@RequestParam @NotBlank(message = "검색어를 입력해주세요.") String keyword,
                                                                        @RequestParam @NotBlank(message = "가게 id 값을 입력해주세요.") UUID shopId,
                                                                        @RequestParam(defaultValue = "1") int page,
-                                                                       @RequestParam(defaultValue = "10") int size,
+                                                                       @PageSize int size,
                                                                        @RequestParam(defaultValue = "latest") String orderBy) {
         PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderBy);
         return ResponseEntity.ok(menuService.searchMenu(shopId, pageRequestDto, keyword));

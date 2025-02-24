@@ -58,7 +58,7 @@ public class AddressController {
     @DeleteMapping("/{address_id}")
     public ResponseEntity<Void> deleteAddress(@AuthenticationPrincipal CustomPrincipal principal,
                                               @PathVariable("address_id") UUID addressId) {
-        addressService.deleteAddress(addressId);
+        addressService.deleteAddress(principal.getId(), addressId);
         return ResponseEntity.ok().build();
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum MemberErrorCode implements ErrorCode {
 
+    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
     MEMBER_DUPLICATE_USERNAME(HttpStatus.CONFLICT, "해당 username 은 사용할 수 없습니다."),
     MEMBER_DUPLICATE_EMAIL(HttpStatus.CONFLICT, "해당 email 은 사용할 수 없습니다."),
     // 인증 정보가 잘못됐을 경우 메시지를 따로 안 보내는 것이....

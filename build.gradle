@@ -74,6 +74,9 @@ dependencies {
 	testImplementation 'org.testcontainers:postgresql'
 
 
+	// thymeleaf: 테스트용 임시 클라이언트 html
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
 }
 
 tasks.named('test') {

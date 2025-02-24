@@ -1,5 +1,6 @@
 package com.fourseason.delivery.global.exception;
 
+import com.fourseason.delivery.domain.payment.exception.CustomRestClientException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,5 +50,14 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN.value())
                 .message("권한이 없습니다.")
                 .build());
+    }
+
+    /**
+     * Handle CustomRestClientException
+     */
+    @ExceptionHandler(CustomRestClientException.class)
+    public ResponseEntity<String> handleCustomRestClientException(CustomRestClientException e) {
+        return ResponseEntity.status(e.getStatusCode())
+                .body(e.getMessage());
     }
 }

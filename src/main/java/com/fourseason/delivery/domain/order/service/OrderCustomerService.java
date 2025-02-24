@@ -1,7 +1,7 @@
 package com.fourseason.delivery.domain.order.service;
 
 import static com.fourseason.delivery.domain.menu.entity.MenuStatus.SHOW;
-import static com.fourseason.delivery.domain.member.MemberErrorCode.MEMBER_NOT_FOUND;
+import static com.fourseason.delivery.domain.member.exception.MemberErrorCode.MEMBER_NOT_FOUND;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.CANCELED;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.MENU_NOT_FOUND;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ORDER_NOT_FOUND;

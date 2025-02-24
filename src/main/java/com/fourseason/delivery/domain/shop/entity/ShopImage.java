@@ -40,7 +40,7 @@ public class ShopImage extends BaseTimeEntity {
     private Shop shop;
 
     @Builder
-    public ShopImage(String imageUrl, String originalFileName, long fileSize, String s3Folder, Shop shop) {
+    private ShopImage(String imageUrl, String originalFileName, long fileSize, String s3Folder, Shop shop) {
         this.imageUrl = imageUrl;
         this.originalFileName = originalFileName;
         this.fileSize = fileSize;
