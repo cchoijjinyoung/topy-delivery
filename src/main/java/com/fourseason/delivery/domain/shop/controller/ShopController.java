@@ -60,8 +60,11 @@ public class ShopController {
      * 가게 수정 API
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Void> updateShop(@PathVariable UUID id, @RequestBody @Valid UpdateShopRequestDto updateShopRequestDto) {
-        shopService.updateShop(id, updateShopRequestDto);
+    public ResponseEntity<Void> updateShop(@PathVariable UUID id,
+                                           @RequestPart @Valid UpdateShopRequestDto updateShopRequestDto,
+                                           @RequestPart List<MultipartFile> newImages,
+                                           @AuthenticationPrincipal CustomPrincipal principal) {
+        shopService.updateShop(id, updateShopRequestDto, newImages, principal.getName());
         return ResponseEntity.ok().build();
     }
 

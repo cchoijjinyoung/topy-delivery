@@ -20,6 +20,7 @@ import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ShopService {
@@ -53,7 +55,7 @@ public class ShopService {
         Shop shop = shopRepository.findByIdAndDeletedAtIsNull(id)
             .orElseThrow(() -> new CustomException(ShopErrorCode.SHOP_NOT_FOUND));
 
-        List<String> images = shopImageRepository.findByShopId(id)
+        List<String> images = shopImageRepository.findByShopIdAndDeletedByIsNull(id)
             .stream()
             .map(ShopImage::getImageUrl)
             .toList();
@@ -78,12 +80,33 @@ public class ShopService {
     }
 
     @Transactional
-    public void updateShop(final UUID id, UpdateShopRequestDto updateShopRequestDto) {
+    public void updateShop(final UUID id, UpdateShopRequestDto updateShopRequestDto, List<MultipartFile> newImages, final String memberName) {
         Shop shop = shopRepository.findById(id)
             .orElseThrow(() -> new CustomException(ShopErrorCode.SHOP_NOT_FOUND));
 
         Category category = categoryRepository.findByName(updateShopRequestDto.category())
             .orElseThrow(() -> new CustomException(ShopErrorCode.CATEGORY_NOT_FOUND));
+
+        List<UUID> exitingImages = shopImageRepository.findByShopIdAndDeletedByIsNull(id).stream()
+            .map(ShopImage::getId)
+            .toList();
+
+        for (UUID imageId : exitingImages) {
+            if (!updateShopRequestDto.images().contains(imageId)) {
+                ShopImage shopImage = shopImageRepository.findById(imageId)
+                    .orElseThrow(() -> new CustomException(ShopErrorCode.SHOP_IMAGE_NOT_FOUND));
+
+                shopImage.deleteOf(memberName);
+            }
+        }
+
+        newImages = newImages.stream()
+            .filter(file -> !file.isEmpty())  // 빈 파일 제거
+            .toList();
+
+        for (MultipartFile file : newImages) {
+            fileService.saveImageFile(S3Folder.SHOP, file, shop.getId());
+        }
 
         shop.updateOf(updateShopRequestDto, category);
     }
