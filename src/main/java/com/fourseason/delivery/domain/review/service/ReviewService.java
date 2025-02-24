@@ -3,7 +3,6 @@ package com.fourseason.delivery.domain.review.service;
 import com.fourseason.delivery.domain.image.enums.S3Folder;
 import com.fourseason.delivery.domain.image.service.FileService;
 import com.fourseason.delivery.domain.member.entity.Member;
-import com.fourseason.delivery.domain.member.entity.Role;
 import com.fourseason.delivery.domain.member.service.MemberQueryService;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderStatus;
@@ -24,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -42,25 +42,24 @@ public class ReviewService {
 
     @Transactional
     public void createReview(UUID orderId, ReviewRequestDto reviewRequestDto, List<MultipartFile> images) {
-        // 1) Order 조회
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException(ReviewErrorCode.ORDER_NOT_FOUND));
 
-        // 2) 주문상태 확인
+        if (order.getCreatedAt().isBefore(LocalDateTime.now().minusDays(5))) {
+            throw new CustomException(ReviewErrorCode.REVIEW_PERIOD_EXPIRED);
+        }
+
         if(order.getOrderStatus() != OrderStatus.COMPLETED) {
             throw new CustomException(ReviewErrorCode.ORDER_NOT_COMPLETED);
         }
 
-        // 3) 기존 리뷰가 있는지 확인
         if(reviewRepository.findByOrderIdAndDeletedAtIsNull(orderId) != null) {
             throw new CustomException(ReviewErrorCode.REVIEW_ALREADY_EXISTS);
         }
 
-        // 4) Review 저장
         Review review = Review.addOf(reviewRequestDto, order);
         reviewRepository.save(review);
 
-        // 4) 이미지 업로드, ReviewImage 저장
         if(images != null && !images.isEmpty()) {
             for(MultipartFile image : images) {
                 fileService.saveImageFile(S3Folder.REVIEW, image, review.getId());
