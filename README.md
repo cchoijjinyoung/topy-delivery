@@ -58,9 +58,8 @@ git clone https://github.com/4S1JIN/s1jin-delivery.git
 
 ## 개발 산출물
 
-- [트러블 슈팅](https://github.com/4S1JIN/s1jin-delivery/wiki/%ED%8A%B8%EB%9F%AC%EB%B8%94-%EC%8A%88%ED%8C%85)
-- 공통 관심 사항
-  - 권한 별 기능 분기 처리
+- [트러블 슈팅](https://github.com/4S1JIN/s1jin-delivery/wiki/%F0%9F%9A%A8-%ED%8A%B8%EB%9F%AC%EB%B8%94-%EC%8A%88%ED%8C%85)
+- [공통 관심 사항](https://github.com/4S1JIN/s1jin-delivery/wiki/%EA%B8%80%EB%A1%9C%EB%B2%8C-%EA%B3%B5%ED%86%B5-%EB%AA%A8%EB%93%88)
 - 테스트 코드
   - 전체 작성된 테스트 코드 수 : 
   - [계층별 테스트 코드 작성 전략](https://github.com/4S1JIN/s1jin-delivery/wiki/%ED%85%8C%EC%8A%A4%ED%8A%B8-%EC%BD%94%EB%93%9C-%EC%9E%91%EC%84%B1-%EC%A0%84%EB%9E%B5)
