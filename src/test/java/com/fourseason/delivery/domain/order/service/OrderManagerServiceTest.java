@@ -1,9 +1,9 @@
 package com.fourseason.delivery.domain.order.service;
 
-import static com.fourseason.delivery.domain.member.MemberErrorCode.MEMBER_NOT_FOUND;
 import static com.fourseason.delivery.domain.member.entity.Role.CUSTOMER;
 import static com.fourseason.delivery.domain.member.entity.Role.MANAGER;
 import static com.fourseason.delivery.domain.member.entity.Role.OWNER;
+import static com.fourseason.delivery.domain.member.exception.MemberErrorCode.MEMBER_NOT_FOUND;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.CANCELED;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.PENDING;
 import static com.fourseason.delivery.domain.order.entity.OrderType.ONLINE;
