@@ -27,7 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestPropertySource(properties = {
         "jwt.secret=123456789012345678901234567890123456789012345678901234567890",
         "cloud.aws.credentials.access-key=access_key",
-        "cloud.aws.credentials.secret-key=secret_key"
+        "cloud.aws.credentials.secret-key=secret_key",
+        "gemini.api.key=jemini_api_key"
 })
 public class AuthTest {
 
