@@ -16,6 +16,7 @@ import com.fourseason.delivery.domain.shop.repository.CategoryRepository;
 import com.fourseason.delivery.domain.shop.repository.ShopImageRepository;
 import com.fourseason.delivery.domain.shop.repository.ShopRepository;
 import com.fourseason.delivery.domain.shop.repository.ShopRepositoryCustom;
+import com.fourseason.delivery.global.dto.FilterRequestDto;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
@@ -123,7 +124,7 @@ public class ShopService {
     }
 
     @Transactional
-    public PageResponseDto<ShopResponseDto> searchShop(PageRequestDto pageRequestDto, String keyword) {
-        return shopRepositoryCustom.searchShopWithPage(pageRequestDto, keyword);
+    public PageResponseDto<ShopResponseDto> searchShop(PageRequestDto pageRequestDto, String keyword, FilterRequestDto filterRequestDto) {
+        return shopRepositoryCustom.searchShopWithPage(pageRequestDto, keyword, filterRequestDto);
     }
 }

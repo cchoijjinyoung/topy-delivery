@@ -2,6 +2,7 @@ package com.fourseason.delivery.domain.shop.repository;
 
 import com.fourseason.delivery.domain.shop.dto.response.ShopResponseDto;
 import com.fourseason.delivery.domain.shop.exception.ShopErrorCode;
+import com.fourseason.delivery.global.dto.FilterRequestDto;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
@@ -44,9 +45,9 @@ public class ShopRepositoryCustom {
     /**
      * 가게 검색 조회
      */
-    public PageResponseDto<ShopResponseDto> searchShopWithPage(PageRequestDto pageRequestDto, String keyword) {
-        List<ShopResponseDto> content = getShopList(pageRequestDto, keyword);
-        long total = getTotalDataCount(keyword);
+    public PageResponseDto<ShopResponseDto> searchShopWithPage(PageRequestDto pageRequestDto, String keyword, FilterRequestDto filterRequestDto) {
+        List<ShopResponseDto> content = getShopList(pageRequestDto, keyword, filterRequestDto);
+        long total = getTotalDataCount(keyword, filterRequestDto);
 
         return new PageResponseDto<>(content, total);
     }
@@ -78,11 +79,11 @@ public class ShopRepositoryCustom {
     /**
      * 검색 결과 페이징 조회 메서드
      */
-    private List<ShopResponseDto> getShopList(PageRequestDto pageRequestDto, String keyword) {
+    private List<ShopResponseDto> getShopList(PageRequestDto pageRequestDto, String keyword, FilterRequestDto filterRequestDto) {
         return jpaQueryFactory
             .from(shop)
             .leftJoin(shopImage).on(shop.id.eq(shopImage.shop.id))
-            .where(getWhereConditions(keyword))
+            .where(getWhereConditions(keyword, filterRequestDto))
             .offset(pageRequestDto.getFirstIndex())
             .limit(pageRequestDto.getSize())
             .orderBy(getOrderConditions(pageRequestDto))
@@ -115,11 +116,11 @@ public class ShopRepositoryCustom {
     /**
      * 전체 데이터 수 조회 - keyword
      */
-    private long getTotalDataCount(String keyword) {
+    private long getTotalDataCount(String keyword, FilterRequestDto filterRequestDto) {
         return Optional.ofNullable(jpaQueryFactory
                 .select(shop.count())
                 .from(shop)
-                .where(getWhereConditions(keyword))
+                .where(getWhereConditions(keyword, filterRequestDto))
                 .fetchOne()
             )
             .orElse(0L);
@@ -136,22 +137,60 @@ public class ShopRepositoryCustom {
     }
 
     /**
-     * 조회 조건 - keyword
+     * 조회 조건 - keyword, filtering
      */
-    private BooleanBuilder getWhereConditions(String keyword) {
-        if (!StringUtils.hasText(keyword)) {
-            throw new CustomException(ShopErrorCode.NO_KEYWORD);
-        }
+    private BooleanBuilder getWhereConditions(String keyword, FilterRequestDto filterRequestDto) {
 
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(shop.deletedAt.isNull());
 
-        BooleanExpression keywordCondition = shop.name.containsIgnoreCase(keyword)
-                .or(shop.description.containsIgnoreCase(keyword));
+        // 검색 키워드 필터링
+        addKeywordFilters(keyword, builder);
 
-        builder.and(keywordCondition);
+        // 카테고리 필터링
+        addCategoryFilters(filterRequestDto.getCategory(), builder);
+
+        // 지역 필터링
+        addRegionFilters(filterRequestDto.getRegion(), builder);
 
         return builder;
+    }
+
+    /**
+     * 검색 키워드 필터링 메서드
+     */
+    private static void addKeywordFilters(String keyword, BooleanBuilder builder) {
+        if (!StringUtils.hasText(keyword)) {
+            throw new CustomException(ShopErrorCode.NO_KEYWORD);
+        }
+
+        builder.and(
+            shop.name.containsIgnoreCase(keyword)
+                .or(shop.description.containsIgnoreCase(keyword))
+        );
+    }
+
+    /**
+     * 카테고리 필터링 메서드
+     */
+    private static void addCategoryFilters(String category, BooleanBuilder builder) {
+        if (!category.equals("category")) {
+            builder.and(
+                shop.category.name.eq(category)
+            );
+        }
+    }
+
+    /**
+     * 지역 필터링 메서드
+     */
+    private static void addRegionFilters(String region, BooleanBuilder builder) {
+        if (!region.equals("region")) {
+            builder.and(
+                shop.detailAddress.containsIgnoreCase(region)
+                    .or(shop.detailAddress.containsIgnoreCase(region))
+            );
+        }
     }
 
     /**
