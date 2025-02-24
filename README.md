@@ -144,8 +144,8 @@ API Statistics
   - CDN 도입
   - Nginx, MinIO등 별도의 파일 서버 구축
 
-### 2) Redis를 활용한 Refesh Token 관리
-- 문제점 : 현재는 Refrest Token을 서버에 저장하고 있지 않아 발행 후 관리에 문제가 생길 수 있음
+### 2) Redis를 활용한 Refresh Token 관리
+- 문제점 : 현재는 Refresh Token을 서버에 저장하고 있지 않아 발행 후 관리에 문제가 생길 수 있음
 - 개선 계획
   - TTL(자동 만료), In-Memory DB의 강점(보안, 속도), 분산 서버 환경에서도 공유된 Redis를 사용한 토큰 관리 등의 장점이 있는 Redis를 활용해 Refresh Token을 관리 
 
