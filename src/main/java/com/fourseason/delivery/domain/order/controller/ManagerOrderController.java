@@ -6,6 +6,7 @@ import com.fourseason.delivery.domain.order.service.OrderManagerService;
 import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
+import com.fourseason.delivery.global.resolver.PageSize;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +56,7 @@ public class ManagerOrderController {
       @RequestParam(required = false) String customerUsername,
       @RequestParam(required = false) UUID shopId,
       @RequestParam(defaultValue = "1") int page,
-      @RequestParam(defaultValue = "10") int size,
+      @PageSize int size,
       @RequestParam(defaultValue = "latest") String orderBy,
       @RequestParam(required = false) String keyword
   ) {

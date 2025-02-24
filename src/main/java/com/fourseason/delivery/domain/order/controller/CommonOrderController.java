@@ -6,6 +6,7 @@ import com.fourseason.delivery.domain.order.service.OrderRoleServiceFinder;
 import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
+import com.fourseason.delivery.global.resolver.PageSize;
 import jakarta.validation.constraints.NotBlank;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +46,7 @@ public class CommonOrderController {
       @RequestParam @NotBlank(message = "유저네임을 입력해주세요.") String username,
       @AuthenticationPrincipal CustomPrincipal principal,
       @RequestParam(defaultValue = "1") int page,
-      @RequestParam(defaultValue = "10") int size,
+      @PageSize int size,
       @RequestParam(defaultValue = "latest") String orderBy,
       @RequestParam(required = false) String keyword
   ) {

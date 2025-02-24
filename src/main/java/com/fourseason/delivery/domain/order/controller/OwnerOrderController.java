@@ -6,6 +6,7 @@ import com.fourseason.delivery.domain.order.service.OrderOwnerService;
 import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
+import com.fourseason.delivery.global.resolver.PageSize;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -66,7 +67,7 @@ public class OwnerOrderController {
       @RequestParam(required = false) String keyword,
       @RequestParam(required = false) UUID shopId,
       @RequestParam(defaultValue = "1") int page,
-      @RequestParam(defaultValue = "10") int size,
+      @PageSize int size,
       @RequestParam(defaultValue = "latest") String orderBy) {
     PageRequestDto pageRequestDto = PageRequestDto.of(page - 1, size, orderBy);
     return ResponseEntity.ok(
