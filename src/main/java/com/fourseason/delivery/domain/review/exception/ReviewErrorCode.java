@@ -13,7 +13,9 @@ public enum ReviewErrorCode implements ErrorCode {
     SHOP_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 가게를 찾을 수 없습니다."),
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 주문을 찾을 수 없습니다."),
     ORDER_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "배달이 완료되지 않았습니다."),
-    REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "해당 주문의 리뷰가 존재합니다." );
+    REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "해당 주문의 리뷰가 존재합니다." ),
+    REVIEW_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 리뷰 이미지를 찾을 수 없습니다.");
+
 
 
 

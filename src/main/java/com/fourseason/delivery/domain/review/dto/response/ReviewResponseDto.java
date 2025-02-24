@@ -6,6 +6,7 @@ import lombok.Builder;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Builder
@@ -15,7 +16,8 @@ public record ReviewResponseDto (
         String username,
         String shopname,
         LocalDateTime createdAt,
-        List<String> imageUrls
+        List<UUID> imageIds,
+        List<String> images
 ) {
     public static ReviewResponseDto of(Review review, List<ReviewImage> reviewImages) {
         return ReviewResponseDto.builder()
@@ -24,9 +26,12 @@ public record ReviewResponseDto (
                 .username(review.getMember().getUsername())
                 .shopname(review.getShop().getName())
                 .createdAt(review.getCreatedAt())
-                .imageUrls(reviewImages.stream()
+                .imageIds(reviewImages.stream()
+                        .map(ReviewImage::getId)
+                        .toList())
+                .images(reviewImages.stream()
                         .map(ReviewImage::getImageUrl)
-                        .collect(Collectors.toList()))
+                        .toList())
                 .build();
     }
 }
