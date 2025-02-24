@@ -59,7 +59,7 @@ public class MenuRepositoryCustom {
     private List<MenuResponseDto> getMenuList(UUID shopId, PageRequestDto pageRequestDto) {
         return jpaQueryFactory
             .from(menu)
-            .leftJoin(menuImage).on(menu.id.eq(menuImage.menu.id))
+            .leftJoin(menuImage).on(menu.id.eq(menuImage.menu.id).and(menuImage.deletedBy.isNull()))
             .where(getWhereConditions(shopId))
             .offset(pageRequestDto.getFirstIndex())
             .limit(pageRequestDto.getSize())
@@ -81,7 +81,7 @@ public class MenuRepositoryCustom {
     public List<MenuResponseDto> getMenuList(UUID shopId, PageRequestDto pageRequestDto, String keyword) {
         return jpaQueryFactory
             .from(menu)
-            .leftJoin(menuImage).on(menu.id.eq(menuImage.menu.id))
+            .leftJoin(menuImage).on(menu.id.eq(menuImage.menu.id).and(menuImage.deletedBy.isNull()))
             .where(getWhereConditions(shopId, keyword))
             .offset(pageRequestDto.getFirstIndex())
             .limit(pageRequestDto.getSize())

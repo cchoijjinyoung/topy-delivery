@@ -57,7 +57,7 @@ public class ShopRepositoryCustom {
     private List<ShopResponseDto> getShopList(PageRequestDto pageRequestDto) {
         return jpaQueryFactory
             .from(shop)
-            .leftJoin(shopImage).on(shop.id.eq(shopImage.shop.id))
+            .leftJoin(shopImage).on(shop.id.eq(shopImage.shop.id).and(shopImage.deletedBy.isNull()))
             .where(getWhereConditions())
             .offset(pageRequestDto.getFirstIndex())
             .limit(pageRequestDto.getSize())
@@ -81,7 +81,7 @@ public class ShopRepositoryCustom {
     private List<ShopResponseDto> getShopList(PageRequestDto pageRequestDto, String keyword) {
         return jpaQueryFactory
             .from(shop)
-            .leftJoin(shopImage).on(shop.id.eq(shopImage.shop.id))
+            .leftJoin(shopImage).on(shop.id.eq(shopImage.shop.id).and(shopImage.deletedBy.isNull()))
             .where(getWhereConditions(keyword))
             .offset(pageRequestDto.getFirstIndex())
             .limit(pageRequestDto.getSize())
