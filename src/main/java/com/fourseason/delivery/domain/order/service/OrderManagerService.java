@@ -91,6 +91,7 @@ public class OrderManagerService implements OrderRoleService {
   }
 
   @Override
+  @Transactional
   public void cancelOrder(UUID orderId, Long loginMemberId) {
     Order order = findOrderOrThrow(orderId);
     order.assertAlreadyCanceled();

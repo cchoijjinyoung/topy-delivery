@@ -39,7 +39,7 @@ public record ManagerOrderSummaryResponseDto(
     return new ManagerOrderSummaryResponseDto(
         order.getShop().getName(),
         order.getAddress(),
-        order.getMember().getUsername(),
+        order.getMember() == null ? "" : order.getMember().getUsername(),
         order.getTotalPrice(),
         order.getOrderStatus(),
         order.getOrderMenuList().stream().map(MenuDto::of).toList(),

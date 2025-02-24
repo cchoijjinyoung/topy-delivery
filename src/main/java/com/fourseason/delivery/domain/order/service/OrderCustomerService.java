@@ -84,6 +84,7 @@ public class OrderCustomerService implements OrderRoleService {
     return orderSearchRepositoryCustom.findByCustomerWithPage(username, pageRequestDto, keyword);
   }
 
+  @Override
   @Transactional
   public void cancelOrder(UUID orderId, Long memberId) {
     Order order = findOrderOrThrow(orderId);

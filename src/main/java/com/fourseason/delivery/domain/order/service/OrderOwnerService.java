@@ -115,6 +115,7 @@ public class OrderOwnerService implements OrderRoleService {
         memberId, shopId, pageRequestDto, keyword);
   }
 
+  @Override
   @Transactional
   public void cancelOrder(UUID orderId, Long memberId) {
     Order order = findOrderOrThrow(orderId);

@@ -1,7 +1,5 @@
 package com.fourseason.delivery.domain.order.dto.response.impl;
 
-import static java.util.stream.Collectors.toList;
-
 import com.fourseason.delivery.domain.order.dto.response.OrderSummaryResponseDto;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderMenu;
