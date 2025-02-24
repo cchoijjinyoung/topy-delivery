@@ -39,7 +39,7 @@ git clone https://github.com/4S1JIN/s1jin-delivery.git
 ### 2. 로컬 DB 세팅을 위해 docker-compose up하기
 - docker를 미리 설치해야한다.
 - 프로젝트의 루트 폴더에 존재하는 `docker-compose.yml`를 들어가서 service 를 up 해준다.
-- (참고) 현재는 postgresql만 존재하고 포트는 `5432:5432` 이다.
+- (참고) 현재는 PostgreSQL만 존재하고 포트는 `5432:5432` 이다.
 
 ### 3. 애플리케이션 정상 실행 확인
 - 스프링 애플리케이션 (`DeliveryApplication`)이 정상 실행되는지 확인한다.
