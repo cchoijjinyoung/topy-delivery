@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 public enum MenuErrorCode implements ErrorCode {
 
     MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 메뉴를 찾을 수 없습니다."),
+    MENU_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 메뉴 이미지를 찾을 수 없습니다."),
     ORDER_BY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 정렬을 찾을 수 없습니다."),
     NO_KEYWORD(HttpStatus.BAD_REQUEST, "검색어를 입력해주세요.");
 

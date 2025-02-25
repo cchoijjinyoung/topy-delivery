@@ -4,6 +4,7 @@ import com.fourseason.delivery.domain.menu.dto.request.CreateMenuRequestDto;
 import com.fourseason.delivery.domain.menu.dto.request.UpdateMenuRequestDto;
 import com.fourseason.delivery.domain.menu.dto.response.MenuResponseDto;
 import com.fourseason.delivery.domain.menu.service.MenuService;
+import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.resolver.PageSize;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -59,8 +61,10 @@ public class MenuController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateMenu(@PathVariable UUID id,
-                                           @RequestBody @Valid UpdateMenuRequestDto updateMenuRequestDto) {
-        menuService.updateMenu(id, updateMenuRequestDto);
+                                           @RequestPart @Valid UpdateMenuRequestDto updateMenuRequestDto,
+                                           @RequestPart(required = false) List<MultipartFile> newImages,
+                                           @AuthenticationPrincipal CustomPrincipal principal) {
+        menuService.updateMenu(id, updateMenuRequestDto, newImages, principal.getName());
         return ResponseEntity.ok().build();
     }
 

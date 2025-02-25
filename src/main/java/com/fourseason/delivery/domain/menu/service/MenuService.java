@@ -14,6 +14,7 @@ import com.fourseason.delivery.domain.menu.repository.MenuImageRepository;
 import com.fourseason.delivery.domain.menu.repository.MenuRepository;
 import com.fourseason.delivery.domain.menu.repository.MenuRepositoryCustom;
 import com.fourseason.delivery.domain.shop.entity.Shop;
+import com.fourseason.delivery.domain.shop.entity.ShopImage;
 import com.fourseason.delivery.domain.shop.exception.ShopErrorCode;
 import com.fourseason.delivery.domain.shop.repository.ShopRepository;
 import com.fourseason.delivery.global.dto.PageRequestDto;
@@ -53,7 +54,7 @@ public class MenuService {
         Menu menu = menuRepository.findByIdAndDeletedAtIsNull(id)
             .orElseThrow(() -> new CustomException(MenuErrorCode.MENU_NOT_FOUND));
 
-        List<String> images = menuImageRepository.findByMenuId(id)
+        List<String> images = menuImageRepository.findByMenuIdAndDeletedByIsNull(id)
             .stream()
             .map(MenuImage::getImageUrl)
             .toList();
@@ -75,9 +76,30 @@ public class MenuService {
     }
 
     @Transactional
-    public void updateMenu(final UUID id, UpdateMenuRequestDto updateMenuRequestDto) {
+    public void updateMenu(final UUID id, UpdateMenuRequestDto updateMenuRequestDto, List<MultipartFile> newImages, String memberName) {
         Menu menu = menuRepository.findById(id)
             .orElseThrow(() -> new CustomException(MenuErrorCode.MENU_NOT_FOUND));
+
+        List<UUID> exitingImages = menuImageRepository.findByMenuIdAndDeletedByIsNull(id).stream()
+            .map(MenuImage::getId)
+            .toList();
+
+        for (UUID imageId : exitingImages) {
+            if (!updateMenuRequestDto.images().contains(imageId)) {
+                MenuImage menuImage = menuImageRepository.findById(imageId)
+                    .orElseThrow(() -> new CustomException(MenuErrorCode.MENU_IMAGE_NOT_FOUND));
+
+                menuImage.deleteOf(memberName);
+            }
+        }
+
+        newImages = newImages.stream()
+                .filter(file -> !file.isEmpty())  // 빈 파일 제거
+                .toList();
+
+        for (MultipartFile file : newImages) {
+            fileService.saveImageFile(S3Folder.MENU, file, menu.getId());
+        }
 
         menu.updateOf(updateMenuRequestDto);
     }
