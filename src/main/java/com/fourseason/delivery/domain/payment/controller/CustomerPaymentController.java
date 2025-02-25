@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.WebAsyncTask;
 
@@ -22,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 @RestController
 @RequestMapping("/api/customer/payments")
 @RequiredArgsConstructor
+@Validated
 public class CustomerPaymentController {
 
     private final PaymentService paymentService;
