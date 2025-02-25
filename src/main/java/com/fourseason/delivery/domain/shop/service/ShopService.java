@@ -26,7 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -67,9 +69,7 @@ public class ShopService {
         Shop shop = Shop.addOf(createShopRequestDto, member, category);
         shopRepository.save(shop);
 
-        for (MultipartFile file : images) {
-            fileService.saveImageFile(S3Folder.SHOP, file, shop.getId());
-        }
+        uploadFiles(images, shop.getId());
     }
 
     @Transactional
@@ -84,8 +84,9 @@ public class ShopService {
             .map(ShopImage::getId)
             .toList();
 
+        Set<UUID> imagesSet = new HashSet<>(updateShopRequestDto.images());
         for (UUID imageId : exitingImages) {
-            if (!updateShopRequestDto.images().contains(imageId)) {
+            if (!imagesSet.contains(imageId)) {
                 ShopImage shopImage = shopImageRepository.findById(imageId)
                     .orElseThrow(() -> new CustomException(ShopErrorCode.SHOP_IMAGE_NOT_FOUND));
 
@@ -93,13 +94,7 @@ public class ShopService {
             }
         }
 
-        newImages = newImages.stream()
-            .filter(file -> !file.isEmpty())  // 빈 파일 제거
-            .toList();
-
-        for (MultipartFile file : newImages) {
-            fileService.saveImageFile(S3Folder.SHOP, file, shop.getId());
-        }
+        uploadFiles(newImages, shop.getId());
 
         shop.updateOf(updateShopRequestDto, category);
     }
@@ -118,5 +113,15 @@ public class ShopService {
     @Transactional
     public PageResponseDto<ShopResponseDto> searchShop(PageRequestDto pageRequestDto, String keyword, FilterRequestDto filterRequestDto) {
         return shopRepositoryCustom.searchShopWithPage(pageRequestDto, keyword, filterRequestDto);
+    }
+
+    private void uploadFiles(List<MultipartFile> images, UUID id) {
+        images = images.stream()
+                .filter(file -> !file.isEmpty())  // 빈 파일 제거
+                .toList();
+
+        for (MultipartFile file : images) {
+            fileService.saveImageFile(S3Folder.SHOP, file, id);
+        }
     }
 }
