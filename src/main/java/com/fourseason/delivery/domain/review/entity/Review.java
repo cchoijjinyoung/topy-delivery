@@ -3,6 +3,7 @@ package com.fourseason.delivery.domain.review.entity;
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.review.dto.request.ReviewRequestDto;
+import com.fourseason.delivery.domain.review.dto.request.ReviewUpdateRequestDto;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
@@ -34,7 +35,7 @@ public class Review extends BaseTimeEntity {
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
 
@@ -62,7 +63,7 @@ public class Review extends BaseTimeEntity {
                 .build();
     }
 
-    public void updateOf(ReviewRequestDto dto) {
+    public void updateOf(ReviewUpdateRequestDto dto) {
         this.content = dto.content();
         this.rating = dto.rating();
     }

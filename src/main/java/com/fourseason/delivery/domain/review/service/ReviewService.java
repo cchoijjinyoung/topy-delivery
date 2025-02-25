@@ -3,11 +3,12 @@ package com.fourseason.delivery.domain.review.service;
 import com.fourseason.delivery.domain.image.enums.S3Folder;
 import com.fourseason.delivery.domain.image.service.FileService;
 import com.fourseason.delivery.domain.member.entity.Member;
-import com.fourseason.delivery.domain.member.entity.Role;
+import com.fourseason.delivery.domain.member.service.MemberQueryService;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderStatus;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
 import com.fourseason.delivery.domain.review.dto.request.ReviewRequestDto;
+import com.fourseason.delivery.domain.review.dto.request.ReviewUpdateRequestDto;
 import com.fourseason.delivery.domain.review.dto.response.ReviewResponseDto;
 import com.fourseason.delivery.domain.review.entity.Review;
 import com.fourseason.delivery.domain.review.entity.ReviewImage;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -35,29 +37,29 @@ public class ReviewService {
     private final OrderRepository orderRepository;
     private final ShopRepository shopRepository;
     private final FileService fileService;
+    private final MemberQueryService memberQueryService;
 
 
     @Transactional
     public void createReview(UUID orderId, ReviewRequestDto reviewRequestDto, List<MultipartFile> images) {
-        // 1) Order 조회
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException(ReviewErrorCode.ORDER_NOT_FOUND));
 
-        // 2) 주문상태 확인
+        if (order.getCreatedAt().isBefore(LocalDateTime.now().minusDays(5))) {
+            throw new CustomException(ReviewErrorCode.REVIEW_PERIOD_EXPIRED);
+        }
+
         if(order.getOrderStatus() != OrderStatus.COMPLETED) {
             throw new CustomException(ReviewErrorCode.ORDER_NOT_COMPLETED);
         }
 
-        // 3) 기존 리뷰가 있는지 확인
         if(reviewRepository.findByOrderIdAndDeletedAtIsNull(orderId) != null) {
             throw new CustomException(ReviewErrorCode.REVIEW_ALREADY_EXISTS);
         }
 
-        // 4) Review 저장
         Review review = Review.addOf(reviewRequestDto, order);
         reviewRepository.save(review);
 
-        // 4) 이미지 업로드, ReviewImage 저장
         if(images != null && !images.isEmpty()) {
             for(MultipartFile image : images) {
                 fileService.saveImageFile(S3Folder.REVIEW, image, review.getId());
@@ -78,43 +80,46 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewResponseDto updateReview(UUID orderId, UUID reviewId, ReviewRequestDto reviewRequestDto, List<MultipartFile> images) {
+    public ReviewResponseDto updateReview(Long memberId, UUID orderId, UUID reviewId, ReviewUpdateRequestDto reviewUpdateRequestDto, List<MultipartFile> newImages) {
         // 1) 리뷰 조회 및 리뷰 내용, 평점 업데이트
         Review review = reviewRepository.findByIdAndOrderIdAndDeletedAtIsNull(reviewId, orderId)
                 .orElseThrow(() -> new CustomException(ReviewErrorCode.REVIEW_NOT_FOUND));
 
-        review.updateOf(reviewRequestDto);
+        review.updateOf(reviewUpdateRequestDto);
 
-        // TODO: 현재 임시 유저를 넣었음. 이후 수정 필요.
-        Member member = new Member("유저", "user@example.com", "1234", "010-0000-0000", Role.CUSTOMER);
+        Member member = memberQueryService.findActiveMember(memberId);
 
+        List<UUID> existingReviewImageIdList = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(reviewId).stream()
+                .map(ReviewImage::getId)
+                .toList();
 
-        // 2) 새로운 이미지가 있을 경우 기존 이미지 삭제
-        List<ReviewImage> existingImages = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(reviewId);
-        if(!existingImages.isEmpty()) {
-            for(ReviewImage image : existingImages) {
-                image.deleteOf(member.getUsername());
+        if(existingReviewImageIdList != null && !existingReviewImageIdList.isEmpty()) {
+            for(UUID id : existingReviewImageIdList) {
+                if(!reviewUpdateRequestDto.unchangedImageId().contains(id)) {
+                    ReviewImage reviewImage = reviewImageRepository.findByIdAndDeletedAtIsNull(id)
+                            .orElseThrow(() -> new CustomException(ReviewErrorCode.REVIEW_IMAGE_NOT_FOUND));
+                    reviewImage.deleteOf(member.getUsername());
+                }
             }
         }
 
-        // 3) 새로운 이미지 추가
-        if(images != null && !images.isEmpty()) {
-            for(MultipartFile image : images) {
+        if(newImages != null && !newImages.isEmpty()) {
+            for(MultipartFile image : newImages) {
                 fileService.saveImageFile(S3Folder.REVIEW, image, review.getId());
             }
         }
-        List<ReviewImage> newImages = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(reviewId);
 
-        return ReviewResponseDto.of(review, newImages);
+        List<ReviewImage> images = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(reviewId);
+
+        return ReviewResponseDto.of(review, images);
     }
 
     @Transactional
-    public void deleteReview(UUID orderId, UUID reviewId) {
+    public void deleteReview(Long memberId, UUID orderId, UUID reviewId) {
         Review review = reviewRepository.findByIdAndOrderIdAndDeletedAtIsNull(reviewId, orderId)
                 .orElseThrow(() -> new CustomException(ReviewErrorCode.REVIEW_NOT_FOUND));
 
-        // TODO: 현재 임시 유저를 넣었음. 이후 수정 필요.
-        Member member = new Member("유저", "user@example.com", "1234", "010-0000-0000", Role.CUSTOMER);
+        Member member = memberQueryService.findActiveMember(memberId);
 
         List<ReviewImage> existingImages = reviewImageRepository.findByReviewIdAndDeletedAtIsNull(reviewId);
         if(!existingImages.isEmpty()) {
