@@ -1,6 +1,15 @@
 package com.fourseason.delivery.fixture;
 
+import static com.fourseason.delivery.domain.order.constant.OrderConstants.*;
+import static com.fourseason.delivery.domain.order.entity.OrderStatus.PENDING;
+import static com.fourseason.delivery.domain.order.entity.OrderType.ONLINE;
+import static com.fourseason.delivery.fixture.MemberFixture.createMember;
+import static com.fourseason.delivery.fixture.OrderMenuFixture.createOrderMenuWithQuantity;
+import static com.fourseason.delivery.fixture.ShopFixture.createShop;
+
 import com.fourseason.delivery.domain.member.entity.Member;
+import com.fourseason.delivery.domain.member.entity.Role;
+import com.fourseason.delivery.domain.order.constant.OrderConstants;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderMenu;
 import com.fourseason.delivery.domain.order.entity.OrderStatus;
@@ -20,6 +29,17 @@ public class OrderFixture {
   public static UUID nextUUID() {
     long count = counter.getAndIncrement();
     return UUID.nameUUIDFromBytes(String.valueOf(count).getBytes(StandardCharsets.UTF_8));
+  }
+
+  public static Order createOrder() {
+    Member member = createMember(Role.CUSTOMER);
+    Shop shop = createShop(member);
+    List<OrderMenu> orderMenuList = List.of(
+        createOrderMenuWithQuantity("치킨", 10000, 1),
+        createOrderMenuWithQuantity("피자", 10000, 2),
+        createOrderMenuWithQuantity("족발", 10000, 3)
+    );
+    return createOrder(member, shop, PENDING, ONLINE, orderMenuList);
   }
 
   public static Order createOrder(Member member, Shop shop, OrderStatus status, OrderType type,
@@ -64,7 +84,8 @@ public class OrderFixture {
         .build();
 
     ReflectionTestUtils.setField(order, "id", nextUUID());
-    ReflectionTestUtils.setField(order, "createdAt", LocalDateTime.now().minusDays(1));
+    ReflectionTestUtils.setField(order, "createdAt",
+        LocalDateTime.now().minus(ORDER_CANCELED_DEADLINE));
     return order;
   }
 }
