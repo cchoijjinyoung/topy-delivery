@@ -2,7 +2,6 @@ package com.fourseason.delivery.domain.order.service;
 
 import static com.fourseason.delivery.domain.member.entity.Role.CUSTOMER;
 import static com.fourseason.delivery.domain.member.entity.Role.OWNER;
-import static com.fourseason.delivery.domain.menu.entity.MenuStatus.SHOW;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.ACCEPTED;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.CANCELED;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.PENDING;
@@ -10,7 +9,6 @@ import static com.fourseason.delivery.domain.order.entity.OrderType.ONLINE;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ORDER_NOT_FOUND;
 import static com.fourseason.delivery.domain.shop.exception.ShopErrorCode.SHOP_NOT_FOUND;
 import static com.fourseason.delivery.fixture.MemberFixture.createMember;
-import static com.fourseason.delivery.fixture.MenuFixture.createMenu;
 import static com.fourseason.delivery.fixture.OrderFixture.createOrder;
 import static com.fourseason.delivery.fixture.OrderMenuFixture.createOrderMenuList;
 import static com.fourseason.delivery.fixture.OrderMenuFixture.createOrderMenuWithQuantity;
@@ -22,20 +20,23 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fourseason.delivery.domain.member.entity.Member;
-import com.fourseason.delivery.domain.menu.entity.Menu;
-import com.fourseason.delivery.domain.menu.repository.MenuRepository;
 import com.fourseason.delivery.domain.order.dto.request.OwnerCreateOrderRequestDto;
-import com.fourseason.delivery.domain.order.dto.request.OwnerCreateOrderRequestDto.MenuDto;
-import com.fourseason.delivery.domain.order.dto.response.OwnerOrderDetailResponseDto;
+import com.fourseason.delivery.domain.order.dto.response.impl.OwnerOrderDetailsResponseDto;
+import com.fourseason.delivery.domain.order.dto.response.impl.OwnerOrderSummaryResponseDto;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderMenu;
-import com.fourseason.delivery.domain.order.entity.OrderType;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
+import com.fourseason.delivery.domain.order.repository.OrderSearchRepositoryCustom;
+import com.fourseason.delivery.domain.payment.entity.Payment;
+import com.fourseason.delivery.domain.payment.repository.PaymentRepository;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.domain.shop.repository.ShopRepository;
 import com.fourseason.delivery.fixture.MemberFixture;
 import com.fourseason.delivery.fixture.OrderFixture;
+import com.fourseason.delivery.global.dto.PageRequestDto;
+import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,33 +44,37 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class OrderOwnerServiceTest {
 
   @Mock
-  ShopRepository shopRepository;
+  private ShopRepository shopRepository;
 
   @Mock
-  MenuRepository menuRepository;
+  private OrderMenuListBuilder orderMenuListBuilder;
 
   @Mock
-  OrderRepository orderRepository;
+  private OrderRepository orderRepository;
+
+  @Mock
+  private PaymentRepository paymentRepository;
+
+  @Mock
+  private OrderSearchRepositoryCustom orderSearchRepositoryCustom;
 
   @InjectMocks
-  OrderOwnerService orderOwnerService;
+  private OrderOwnerService orderOwnerService;
 
   @Nested
-  class createOrder {
+  class CreateOrder {
 
     @Test
-    @DisplayName("점주가 대면 주문 접수 시, 존재하지 않은 가게면, 예외가 발생한다.")
-    void shop_not_found() {
+    @DisplayName("대면 주문 생성 시, 존재하지 않는 가게면 예외가 발생한다.")
+    void not_found_shop() {
       // given
       OwnerCreateOrderRequestDto request = OwnerCreateOrderRequestDto.builder()
           .shopId(UUID.randomUUID())
@@ -78,151 +83,86 @@ class OrderOwnerServiceTest {
           .menuList(List.of())
           .build();
 
-      Long memberId = 1L;
+      Long ownerId = 1L;
 
-      when(shopRepository.findById(request.shopId())).thenThrow(
+      when(shopRepository.findByIdAndDeletedAtIsNull(request.shopId())).thenThrow(
           new CustomException(SHOP_NOT_FOUND));
 
       // when
       // then
       assertThatThrownBy(
-          () -> orderOwnerService.createOrder(request, memberId))
+          () -> orderOwnerService.createOfflineOrder(request, ownerId))
           .isInstanceOf(CustomException.class)
           .hasMessage("해당 가게를 찾을 수 없습니다.");
     }
 
     @Test
-    @DisplayName("점주가 대면 주문 접수 시, 가게 주인이 아니라면 예외가 발생한다.")
+    @DisplayName("대면 주문 생성 시, 가게 주인이 아니면 예외가 발생한다.")
     void not_shop_owner() {
       // given
-      Member loginMember = createMember(OWNER);
+      Member owner = createMember(OWNER);
 
-      Member anotherOwner = createMember(OWNER);
-      Shop anotherShop = createShop(anotherOwner);
+      Member another = createMember(OWNER);
+      Shop shop = createShop(another);
 
       OwnerCreateOrderRequestDto request = OwnerCreateOrderRequestDto.builder()
-          .shopId(anotherShop.getId())
+          .shopId(shop.getId())
           .address("배달 주소")
-          .instruction("요청 사항")
           .menuList(List.of())
+          .instruction("요청 사항")
           .build();
 
-      when(shopRepository.findById(request.shopId())).thenReturn(Optional.of(anotherShop));
+      when(shopRepository.findByIdAndDeletedAtIsNull(request.shopId())).thenReturn(
+          Optional.of(shop));
 
       // when
       // then
       assertThatThrownBy(
-          () -> orderOwnerService.createOrder(request, loginMember.getId()))
+          () -> orderOwnerService.createOfflineOrder(request, owner.getId()))
           .isInstanceOf(CustomException.class)
           .hasMessage("가게 주인이 아닙니다.");
     }
 
     @Test
-    @DisplayName("점주가 대면 주문 접수 시, 존재히지 않는 메뉴라면 예외가 발생한다.")
-    void not_found_menu() {
-      // given
-      Member loginMember = createMember(OWNER);
-
-      Shop shop = createShop(loginMember);
-
-      // 요청 메뉴: 한 종류
-      MenuDto menuDto = MenuDto.builder()
-          .menuId(UUID.randomUUID())
-          .quantity(2)
-          .build();
-
-      OwnerCreateOrderRequestDto request = OwnerCreateOrderRequestDto.builder()
-          .shopId(shop.getId())
-          .address("배달 주소")
-          .instruction("요청 사항")
-          .menuList(List.of(menuDto))
-          .build();
-
-      when(shopRepository.findById(request.shopId())).thenReturn(Optional.of(shop));
-      when(menuRepository.findByIdInAndMenuStatusAndShopAndDeletedAtIsNull(
-          request.menuList().stream().map(MenuDto::menuId).toList(), SHOW, shop))
-          .thenReturn(List.of()); // 비어있는 메뉴 리스트가 응답될 시,
-
-      // when
-      // then
-      assertThatThrownBy(
-          () -> orderOwnerService.createOrder(request, loginMember.getId()))
-          .isInstanceOf(CustomException.class)
-          .hasMessage("해당 메뉴를 찾을 수 없습니다.");
-    }
-
-    @Test
-    @DisplayName("점주대면 주문 접수 성공")
+    @DisplayName("대면 주문 생성 성공")
     void success() {
       // given
-      Member loginMember = createMember(OWNER);
-
-      Shop shop = createShop(loginMember);
-
-      Menu menu1 = createMenu(shop, "치킨", 10000);
-      Menu menu2 = createMenu(shop, "피자", 10000);
-      Menu menu3 = createMenu(shop, "족발", 10000);
+      Member owner = createMember(OWNER);
+      Shop shop = createShop(owner);
 
       OwnerCreateOrderRequestDto request = OwnerCreateOrderRequestDto.builder()
           .shopId(shop.getId())
           .address("배달 주소")
           .instruction("요청 사항")
-          .menuList(List.of(
-              MenuDto.builder().menuId(menu1.getId()).quantity(1).build(),
-              MenuDto.builder().menuId(menu2.getId()).quantity(2).build(),
-              MenuDto.builder().menuId(menu3.getId()).quantity(3).build()
-          ))
+          .menuList(List.of())
           .build();
 
-      when(shopRepository.findById(request.shopId())).thenReturn(Optional.of(shop));
-      when(menuRepository.findByIdInAndMenuStatusAndShopAndDeletedAtIsNull(
-          request.menuList().stream().map(MenuDto::menuId).toList(), SHOW, shop))
-          .thenReturn(List.of(menu1, menu2, menu3));
+      Member customer = createMember(CUSTOMER);
+      List<OrderMenu> orderMenuList = createOrderMenuList(
+          createOrderMenuWithQuantity("치킨", 10000, 1),
+          createOrderMenuWithQuantity("피자", 10000, 2),
+          createOrderMenuWithQuantity("족발", 10000, 3)
+      );
 
-      Order order = Order.builder().build();
-      ReflectionTestUtils.setField(order, "id", UUID.randomUUID());
-      when(orderRepository.save(any(Order.class))).thenReturn(order);
+      when(shopRepository.findByIdAndDeletedAtIsNull(request.shopId())).thenReturn(
+          Optional.of(shop));
+      when(orderMenuListBuilder.create(request.toOrderCreateDto(shop)))
+          .thenReturn(orderMenuList);
+
+      Order order = createOrder(customer, shop, PENDING, ONLINE, orderMenuList);
+      when(orderRepository.save(any())).thenReturn(order);
 
       // when
-      UUID savedOrderId = orderOwnerService.createOrder(request, loginMember.getId());
+      UUID actualId = orderOwnerService.createOfflineOrder(request, owner.getId());
 
       // then
-      ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
-      verify(orderRepository).save(orderCaptor.capture());
-      Order capturedOrder = orderCaptor.getValue();
-
-      assertThat(capturedOrder.getShop()).isEqualTo(shop);
-      assertThat(capturedOrder.getAddress()).isEqualTo("배달 주소");
-      assertThat(capturedOrder.getInstruction()).isEqualTo("요청 사항");
-      assertThat(capturedOrder.getTotalPrice()).isEqualTo(60000);
-
-      assertThat(capturedOrder.getOrderStatus()).isEqualTo(ACCEPTED);
-      assertThat(capturedOrder.getOrderType()).isEqualTo(OrderType.OFFLINE);
-
-      List<OrderMenu> orderMenus = capturedOrder.getOrderMenuList();
-      assertThat(orderMenus).hasSize(3);
-
-      OrderMenu orderMenu1 = orderMenus.get(0);
-      assertThat(orderMenu1.getName()).isEqualTo("치킨");
-      assertThat(orderMenu1.getPrice()).isEqualTo(10000);
-      assertThat(orderMenu1.getQuantity()).isEqualTo(1);
-
-      OrderMenu orderMenu2 = orderMenus.get(1);
-      assertThat(orderMenu2.getName()).isEqualTo("피자");
-      assertThat(orderMenu2.getPrice()).isEqualTo(10000);
-      assertThat(orderMenu2.getQuantity()).isEqualTo(2);
-
-      OrderMenu orderMenu3 = orderMenus.get(2);
-      assertThat(orderMenu3.getName()).isEqualTo("족발");
-      assertThat(orderMenu3.getPrice()).isEqualTo(10000);
-      assertThat(orderMenu3.getQuantity()).isEqualTo(3);
-
-      assertThat(savedOrderId).isEqualTo(order.getId());
+      verify(orderRepository).save(any(Order.class));
+      assertThat(actualId).isEqualTo(order.getId());
     }
   }
 
   @Nested
-  class acceptOrder {
+  class AcceptOrder {
 
     UUID orderId = UUID.randomUUID();
 
@@ -232,17 +172,18 @@ class OrderOwnerServiceTest {
       // given
       Member loginMember = MemberFixture.createMember(OWNER);
 
-      when(orderRepository.findById(orderId)).thenThrow(new CustomException(ORDER_NOT_FOUND));
+      when(orderRepository.findByIdAndDeletedAtIsNull(orderId)).thenThrow(
+          new CustomException(ORDER_NOT_FOUND));
 
-      // when  
-      // then      
-      assertThatThrownBy(() -> orderOwnerService.acceptOrder(loginMember.getId(), orderId))
+      // when
+      // then
+      assertThatThrownBy(() -> orderOwnerService.acceptOrder(orderId, loginMember.getId()))
           .isInstanceOf(CustomException.class)
           .hasMessage("해당 주문을 찾을 수 없습니다.");
     }
 
     @Test
-    @DisplayName("주문 수락 시 해당 가게의 주문이 아니면 예외가 발생한다.")
+    @DisplayName("주문 수락 시 해당 가게의 점주가 아니면 예외가 발생한다.")
     void not_shop_order() {
       // given
       Member loginMember = MemberFixture.createMember(OWNER);
@@ -253,13 +194,62 @@ class OrderOwnerServiceTest {
       Order anotherOrder = OrderFixture.createOrder(
           MemberFixture.createMember(CUSTOMER), anotherOwnerShop, PENDING, ONLINE, List.of());
 
-      when(orderRepository.findById(orderId)).thenReturn(Optional.of(anotherOrder));
+      when(orderRepository.findByIdAndDeletedAtIsNull(orderId)).thenReturn(
+          Optional.of(anotherOrder));
 
       // when
       // then
-      assertThatThrownBy(() -> orderOwnerService.acceptOrder(loginMember.getId(), orderId))
+      assertThatThrownBy(() -> orderOwnerService.acceptOrder(orderId, loginMember.getId()))
           .isInstanceOf(CustomException.class)
           .hasMessage("가게 주인이 아닙니다.");
+    }
+
+    @Test
+    @DisplayName("주문 수락 시 수락 대기중인 주문이 아니면 예외가 발생한다.")
+    void no_pending_order() {
+      // given
+      Member loginMember = MemberFixture.createMember(OWNER);
+
+      Shop shop = createShop(loginMember);
+
+      Order noPendingOrder = OrderFixture.createOrder(
+          MemberFixture.createMember(CUSTOMER), shop, ACCEPTED, ONLINE, List.of());
+
+      when(orderRepository.findByIdAndDeletedAtIsNull(orderId))
+          .thenReturn(Optional.of(noPendingOrder));
+
+      // when
+      // then
+      assertThatThrownBy(() -> orderOwnerService.acceptOrder(orderId, loginMember.getId()))
+          .isInstanceOf(CustomException.class)
+          .hasMessage("보류 중인 주문이 아닙니다.");
+    }
+
+    @Test
+    @DisplayName("주문 수락 시 결제된 주문이 아니면 예외가 발생한다.")
+    void not_paid_order() {
+      // given
+      Member loginMember = MemberFixture.createMember(OWNER);
+
+      Shop shop = createShop(loginMember);
+
+      Order order = OrderFixture.createOrder(
+          MemberFixture.createMember(CUSTOMER), shop, PENDING, ONLINE, List.of());
+
+      when(orderRepository.findByIdAndDeletedAtIsNull(orderId))
+          .thenReturn(Optional.of(order));
+
+      Payment payment = Payment.builder()
+          .paymentStatus("READY")
+          .build();
+
+      when(paymentRepository.findByOrderAndDeletedAtIsNull(order)).thenReturn(Optional.of(payment));
+
+      // when
+      // then
+      assertThatThrownBy(() -> orderOwnerService.acceptOrder(orderId, loginMember.getId()))
+          .isInstanceOf(CustomException.class)
+          .hasMessage("결제되지 않은 주문입니다.");
     }
 
     @Test
@@ -271,10 +261,16 @@ class OrderOwnerServiceTest {
       Order order = OrderFixture.createOrder(
           MemberFixture.createMember(CUSTOMER), shop, PENDING, ONLINE, List.of());
 
-      when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+      when(orderRepository.findByIdAndDeletedAtIsNull(orderId)).thenReturn(Optional.of(order));
+
+      Payment payment = Payment.builder()
+          .paymentStatus("DONE")
+          .build();
+
+      when(paymentRepository.findByOrderAndDeletedAtIsNull(order)).thenReturn(Optional.of(payment));
 
       // when
-      orderOwnerService.acceptOrder(loginMember.getId(), orderId);
+      orderOwnerService.acceptOrder(orderId, loginMember.getId());
 
       // then
       assertThat(order.getOrderStatus()).isEqualTo(ACCEPTED);
@@ -282,15 +278,16 @@ class OrderOwnerServiceTest {
   }
 
   @Nested
-  class getOrder {
+  class GetOrder {
 
     @Test
-    @DisplayName("점주 주문 상세 조회 시, 존재하지 않는 주문이면 예외가 발생한다.")
+    @DisplayName("점주가 주문 상세 조회 시, 존재하지 않는 주문이면 예외가 발생한다.")
     void order_not_found() {
       // given
       Member loginMember = createMember(OWNER);
       UUID orderId = UUID.randomUUID();
-      when(orderRepository.findById(orderId)).thenThrow(new CustomException(ORDER_NOT_FOUND));
+      when(orderRepository.findByIdAndDeletedAtIsNull(orderId)).thenThrow(
+          new CustomException(ORDER_NOT_FOUND));
 
       // when
       // then
@@ -300,7 +297,7 @@ class OrderOwnerServiceTest {
     }
 
     @Test
-    @DisplayName("점주 주문 상세 조회 시, 주문 가게의 점주가 아니면 예외가 발생한다.")
+    @DisplayName("점주가 주문 상세 조회 시, 주문의 고객도 아니고, 주문 가게의 주인도 아니면 예외가 발생한다.")
     void not_ordered_by_customer() {
       // given
       Member loginMember = createMember(OWNER);
@@ -315,13 +312,14 @@ class OrderOwnerServiceTest {
 
       Member customer = createMember(CUSTOMER);
       Order order = createOrder(customer, anotherOwnerShop, PENDING, ONLINE, orderMenuList);
-      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+      when(orderRepository.findByIdAndDeletedAtIsNull(order.getId())).thenReturn(
+          Optional.of(order));
 
       // when
       // then
       assertThatThrownBy(() -> orderOwnerService.getOrder(order.getId(), loginMember.getId()))
           .isInstanceOf(CustomException.class)
-          .hasMessage("가게 주인이 아닙니다.");
+          .hasMessage("가게 주인이거나 주문 고객이어야 합니다.");
     }
 
     @Test
@@ -338,10 +336,11 @@ class OrderOwnerServiceTest {
       );
 
       Order order = createOrder(loginMember, shop, PENDING, ONLINE, orderMenuList);
-      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+      when(orderRepository.findByIdAndDeletedAtIsNull(order.getId())).thenReturn(
+          Optional.of(order));
 
       // when
-      OwnerOrderDetailResponseDto response = orderOwnerService.getOrder(order.getId(),
+      OwnerOrderDetailsResponseDto response = orderOwnerService.getOrder(order.getId(),
           loginMember.getId());
 
       // then
@@ -362,6 +361,152 @@ class OrderOwnerServiceTest {
   }
 
   @Nested
+  class GetOrderList {
+
+    @Test
+    @DisplayName("주문 목록 조회 시, 회원 본인의 주문 목록이 아니면 예외가 발생한다.")
+    void not_ordered_by_customer() {
+      // given
+      String username = "want";
+      String loginMemberUsername = "me";
+      PageRequestDto pageRequestDto = PageRequestDto.of(0, 10, "latest");
+      String keyword = "sampleKeyword";
+
+      // when
+      // then
+      assertThatThrownBy(() -> orderOwnerService.getOrderList(
+          username, loginMemberUsername, pageRequestDto, keyword))
+          .isInstanceOf(CustomException.class)
+          .hasMessage("주문 조회 권한이 없습니다.");
+    }
+
+    @Test
+    @DisplayName("주문 목록 조회 성공")
+    void success() {
+      // given
+      String username = "want";
+      String loginMemberUsername = "want";
+      PageRequestDto pageRequestDto = PageRequestDto.of(0, 10, "latest");
+      String keyword = "sampleKeyword";
+
+      PageResponseDto<OwnerOrderSummaryResponseDto> expectedResponse =
+          new PageResponseDto<>(Collections.singletonList(
+              new OwnerOrderSummaryResponseDto(createOrder())
+          ), 1L);
+
+      when(orderSearchRepositoryCustom.findByOwnerWithPage(username, pageRequestDto, keyword))
+          .thenReturn(expectedResponse);
+
+      // when
+      PageResponseDto<OwnerOrderSummaryResponseDto> actualResponse =
+          orderOwnerService.getOrderList(username, loginMemberUsername, pageRequestDto, keyword);
+
+      // then
+      assertThat(expectedResponse).isEqualTo(actualResponse);
+      verify(orderSearchRepositoryCustom).findByOwnerWithPage(username, pageRequestDto, keyword);
+    }
+  }
+
+  @Nested
+  class SearchOrderList {
+
+    @Test
+    @DisplayName("점주가 주문 검색 시, 존재하지 않는 가게면 예외가 발생한다.")
+    void shop_not_found() {
+      // given
+      Member member = createMember(OWNER);
+      UUID shopId = UUID.randomUUID();
+
+      PageRequestDto pageRequestDto = PageRequestDto.of(0, 10, "latest");
+      String keyword = "sampleKeyword";
+
+      // when
+      when(shopRepository.findByIdAndDeletedAtIsNull(shopId)).thenReturn(Optional.empty());
+      // then
+      assertThatThrownBy(() -> orderOwnerService.searchOrderList(
+          member.getId(), shopId, pageRequestDto, keyword))
+          .isInstanceOf(CustomException.class)
+          .hasMessage("해당 가게를 찾을 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("점주가 주문 검색 시, 본인의 가게가 아니면 예외가 발생한다.")
+    void order_not_found() {
+      // given
+      Member member = createMember(OWNER);
+
+      Member another = createMember(OWNER);
+      Shop shop = createShop(another);
+
+      PageRequestDto pageRequestDto = PageRequestDto.of(0, 10, "latest");
+      String keyword = "sampleKeyword";
+
+      // when
+      when(shopRepository.findByIdAndDeletedAtIsNull(shop.getId())).thenReturn(Optional.of(shop));
+      // then
+      assertThatThrownBy(() -> orderOwnerService.searchOrderList(
+          member.getId(), shop.getId(), pageRequestDto, keyword))
+          .isInstanceOf(CustomException.class)
+          .hasMessage("가게 주인이 아닙니다.");
+    }
+
+    @Test
+    @DisplayName("점주가 주문 검색 시, shopId가 없어도 성공한다.")
+    void success_shopId_is_null() {
+      // given
+      Member member = createMember(OWNER);
+      PageRequestDto pageRequestDto = PageRequestDto.of(0, 10, "latest");
+      String keyword = "sampleKeyword";
+
+      PageResponseDto<OwnerOrderSummaryResponseDto> expectedResponse =
+          new PageResponseDto<>(Collections.singletonList(
+              new OwnerOrderSummaryResponseDto(createOrder())
+          ), 1L);
+
+      when(orderSearchRepositoryCustom.searchByOwnerWithPage(member.getId(), null, pageRequestDto,
+          keyword)).thenReturn(expectedResponse);
+
+      // when
+      PageResponseDto<OwnerOrderSummaryResponseDto> actualResponse =
+          orderOwnerService.searchOrderList(member.getId(), null, pageRequestDto, keyword);
+
+      // then
+      assertThat(expectedResponse).isEqualTo(actualResponse);
+      verify(orderSearchRepositoryCustom).searchByOwnerWithPage(
+          member.getId(), null, pageRequestDto, keyword);
+    }
+
+    @Test
+    @DisplayName("점주 가게 주문 내역 검색 성공.")
+    void success_shopId_is_not_null() {
+      // given
+      Member member = createMember(OWNER);
+      Shop shop = createShop(member);
+      PageRequestDto pageRequestDto = PageRequestDto.of(0, 10, "latest");
+      String keyword = "sampleKeyword";
+
+      when(shopRepository.findByIdAndDeletedAtIsNull(shop.getId())).thenReturn(Optional.of(shop));
+
+      PageResponseDto<OwnerOrderSummaryResponseDto> expectedResponse =
+          new PageResponseDto<>(Collections.singletonList(
+              new OwnerOrderSummaryResponseDto(createOrder())
+          ), 1L);
+      when(orderSearchRepositoryCustom.searchByOwnerWithPage(member.getId(), shop.getId(),
+          pageRequestDto,
+          keyword)).thenReturn(expectedResponse);
+
+      // when
+      PageResponseDto<OwnerOrderSummaryResponseDto> actualResponse =
+          orderOwnerService.searchOrderList(member.getId(), shop.getId(), pageRequestDto, keyword);
+
+      // then
+      assertThat(expectedResponse).isEqualTo(actualResponse);
+      verify(orderSearchRepositoryCustom).searchByOwnerWithPage(
+          member.getId(), shop.getId(), pageRequestDto, keyword);
+    }
+  }
+
+  @Nested
   class CancelOrder {
 
     @Test
@@ -370,7 +515,8 @@ class OrderOwnerServiceTest {
       // given
       Member loginMember = createMember(OWNER);
       UUID orderId = UUID.randomUUID();
-      when(orderRepository.findById(orderId)).thenThrow(new CustomException(ORDER_NOT_FOUND));
+      when(orderRepository.findByIdAndDeletedAtIsNull(orderId)).thenThrow(
+          new CustomException(ORDER_NOT_FOUND));
 
       // when
       // then
@@ -380,7 +526,7 @@ class OrderOwnerServiceTest {
     }
 
     @Test
-    @DisplayName("점주가 주문 취소 시, 가게 주인이 아니면 예외가 발생한다.")
+    @DisplayName("점주가 주문 취소 시, 주문의 고객도 아니고, 주문 가게의 주인도 아니면 예외가 발생한다.")
     void not_ordered_by_customer() {
       // given
       Member loginMember = createMember(OWNER);
@@ -394,17 +540,18 @@ class OrderOwnerServiceTest {
           createOrderMenuWithQuantity("족발", 20000, 3)
       );
       Order order = createOrder(customer, anotherShop, PENDING, ONLINE, orderMenuList);
-      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+      when(orderRepository.findByIdAndDeletedAtIsNull(order.getId())).thenReturn(
+          Optional.of(order));
 
       // when
       // then
       assertThatThrownBy(() -> orderOwnerService.cancelOrder(order.getId(), loginMember.getId()))
           .isInstanceOf(CustomException.class)
-          .hasMessage("가게 주인이 아닙니다.");
+          .hasMessage("가게 주인이거나 주문 고객이어야 합니다.");
     }
 
     @Test
-    @DisplayName("고객의 요청 주문 취소 성공")
+    @DisplayName("점주의 요청 주문 취소 성공")
     void success() {
       // given
       Member loginMember = createMember(OWNER);
@@ -417,7 +564,8 @@ class OrderOwnerServiceTest {
           createOrderMenuWithQuantity("족발", 20000, 3)
       );
       Order order = createOrder(customer, shop, PENDING, ONLINE, orderMenuList);
-      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+      when(orderRepository.findByIdAndDeletedAtIsNull(order.getId())).thenReturn(
+          Optional.of(order));
 
       // when
       orderOwnerService.cancelOrder(order.getId(), loginMember.getId());

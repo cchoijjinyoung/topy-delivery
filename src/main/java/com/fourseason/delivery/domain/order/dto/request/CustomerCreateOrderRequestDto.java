@@ -1,7 +1,8 @@
 package com.fourseason.delivery.domain.order.dto.request;
 
-import static com.fourseason.delivery.domain.member.entity.Role.OWNER;
+import static com.fourseason.delivery.domain.member.entity.Role.*;
 
+import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.order.dto.request.OrderCreateDto.OrderMenuCreateDto;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import jakarta.validation.constraints.NotBlank;
@@ -13,7 +14,7 @@ import java.util.UUID;
 import lombok.Builder;
 
 @Builder
-public record OwnerCreateOrderRequestDto(
+public record CustomerCreateOrderRequestDto(
     @NotNull(message = "가게 id는 필수 입력 값입니다.")
     UUID shopId,
 
@@ -40,11 +41,12 @@ public record OwnerCreateOrderRequestDto(
     }
   }
 
-  public OrderCreateDto toOrderCreateDto(Shop shop) {
+  public OrderCreateDto toOrderCreateDto(Shop shop, Member customer) {
     return OrderCreateDto.builder()
         .orderMenuCreateDtoList(this.menuList.stream().map(MenuDto::toOrderMenuCreateDto).toList())
-        .byRole(OWNER)
+        .byRole(CUSTOMER)
         .shop(shop)
+        .customer(customer)
         .address(this.address)
         .instruction(this.instruction)
         .build();
