@@ -12,12 +12,13 @@ import com.fourseason.delivery.domain.payment.dto.request.CreatePaymentRequestDt
 import com.fourseason.delivery.domain.payment.entity.Payment;
 import com.fourseason.delivery.domain.payment.exception.CustomRestClientException;
 import com.fourseason.delivery.domain.payment.exception.PaymentErrorCode;
+import com.fourseason.delivery.domain.payment.exception.RestErrorResponse;
 import com.fourseason.delivery.domain.payment.repository.PaymentRepository;
-import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
@@ -59,19 +60,19 @@ public class PaymentExternalService {
 
         // 외부 api 호출 과정에서 internal error 발생시
         } catch (HttpStatusCodeException e) {
-            throw new CustomRestClientException(e.getStatusCode(), e.getResponseBodyAsString());
+            throw new CustomRestClientException(e.getStatusCode(), e.getResponseBodyAs(RestErrorResponse.class));
         }
     }
 
     /**
      * 결제 취소
      */
-    public String cancelPayment(final CancelPaymentRequestDto cancelPaymentRequestDto, final Payment payment) {
+    public String cancelPayment(final CancelPaymentRequestDto cancelPaymentRequestDto, final String paymentKey) {
         // 취소 요청
         RestClient restClient = RestClient.create();
         try {
             return restClient.post()
-                    .uri("https://api.tosspayments.com//v1/payments/" + payment.getPaymentKey() + "/cancel")
+                    .uri("https://api.tosspayments.com//v1/payments/" + paymentKey + "/cancel")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Authorization", authorizations)
                     .body(cancelPaymentRequestDto)
@@ -79,8 +80,8 @@ public class PaymentExternalService {
                     .body(String.class);
 
             // 외부 api 호출 과정에서 internal error 발생시
-        } catch (HttpServerErrorException e) {
-            throw new CustomRestClientException(e.getStatusCode(), e.getResponseBodyAsString());
+        } catch (HttpServerErrorException | HttpClientErrorException e) {
+            throw new CustomRestClientException(e.getStatusCode(), e.getResponseBodyAs(RestErrorResponse.class));
         }
     }
 

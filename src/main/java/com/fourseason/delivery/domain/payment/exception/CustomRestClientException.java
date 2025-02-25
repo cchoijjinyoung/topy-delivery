@@ -11,8 +11,8 @@ public class CustomRestClientException extends RuntimeException {
     private final String message;  // 응답 본문을 저장
 
 
-    public CustomRestClientException(HttpStatusCode statusCode, String message) {
+    public CustomRestClientException(HttpStatusCode statusCode, RestErrorResponse errorResponse) {
         this.statusCode = statusCode;
-        this.message = message;
+        this.message = errorResponse.message();
     }
 }

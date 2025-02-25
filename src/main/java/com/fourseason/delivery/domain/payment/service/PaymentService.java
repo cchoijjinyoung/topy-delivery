@@ -1,7 +1,5 @@
 package com.fourseason.delivery.domain.payment.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.exception.MemberErrorCode;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
@@ -9,8 +7,6 @@ import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderStatus;
 import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
-import com.fourseason.delivery.domain.payment.dto.external.ExternalCancelPaymentDto;
-import com.fourseason.delivery.domain.payment.dto.external.ExternalPaymentDto;
 import com.fourseason.delivery.domain.payment.dto.request.CancelPaymentRequestDto;
 import com.fourseason.delivery.domain.payment.dto.request.CreatePaymentRequestDto;
 import com.fourseason.delivery.domain.payment.dto.response.PaymentResponseDto;
@@ -34,6 +30,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +42,7 @@ public class PaymentService {
     private final MemberRepository memberRepository;
     private final PaymentExternalService paymentExternalService;
     private final ShopRepository shopRepository;
+    private final PaymentCompensatingService paymentCompensatingService;
 
     /**
      * 사용자 결제 전체 조회
@@ -90,10 +88,9 @@ public class PaymentService {
     }
 
     /**
-     * 결제 등록
+     * 결제 승인, 등록
      */
-    @Transactional
-    public URI registerPayment(final CreatePaymentRequestDto createPaymentRequestDto, final CustomPrincipal customPrincipal) {
+    public CompletableFuture<URI> confirmAndRegister(final CreatePaymentRequestDto createPaymentRequestDto, final CustomPrincipal customPrincipal) {
         // 결제전 검증할 것
         Member member = checkMember(customPrincipal.getId());
         Order order = checkOrder(createPaymentRequestDto.orderId(), member);
@@ -101,22 +98,8 @@ public class PaymentService {
         // 결제 승인 진행
         String paymentResult = paymentExternalService.confirmPayment(createPaymentRequestDto);
         System.out.println(paymentResult);
-        // 승인 결과 mapping후 저장 TODO: (이부분을 비동기 처리 할 것)
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            ExternalPaymentDto externalPaymentDto = objectMapper.readValue(paymentResult, ExternalPaymentDto.class);
-
-            Payment payment = Payment.addOf(externalPaymentDto, order, member);
-            paymentRepository.save(payment);
-
-            return ServletUriComponentsBuilder
-                    .fromCurrentRequest()
-                    .path("/{id}")
-                    .buildAndExpand(payment.getId())
-                    .toUri();
-        } catch (JsonProcessingException e) {
-            throw new CustomException(PaymentErrorCode.PAYMENT_MAPPING_FAIL);
-        }
+        // 승인 결과 mapping후 저장
+        return paymentCompensatingService.registerPaymentWithRetry(paymentResult, order, member);
     }
 
     /**
@@ -147,34 +130,35 @@ public class PaymentService {
      */
     @Transactional
     public URI cancelPayment(final CancelPaymentRequestDto cancelPaymentRequestDto, Payment payment) {
+        // 취소로 변경
+        payment.cancelOf(cancelPaymentRequestDto);
         // 취소 요청
-        String paymentResult = paymentExternalService.cancelPayment(cancelPaymentRequestDto, payment);
+        String paymentResult = paymentExternalService.cancelPayment(cancelPaymentRequestDto, payment.getPaymentKey());
         System.out.println(paymentResult);
-        // 취소 결과 mapping후 저장 TODO: (이부분을 비동기 처리 할 것)
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            ExternalCancelPaymentDto externalCancelPaymentDto = objectMapper.readValue(paymentResult, ExternalCancelPaymentDto.class);
 
-            payment.cancelOf(externalCancelPaymentDto);
-
-            return ServletUriComponentsBuilder
-                    .fromCurrentRequest()
-                    .path("/{id}")
-                    .buildAndExpand(payment.getId())
-                    .toUri();
-        } catch (JsonProcessingException e) {
-            throw new CustomException(PaymentErrorCode.PAYMENT_MAPPING_FAIL);
-        }
+        return ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(payment.getId())
+                .toUri();
     }
-
 
     /**
      * 관리자 결제 전체 조회
      */
     @Transactional(readOnly = true)
-    public PageResponseDto<PaymentResponseDto> findPaymentListForCustomer(final PageRequestDto pageRequestDto) {
+    public PageResponseDto<PaymentResponseDto> findPaymentListForAdmin(final PageRequestDto pageRequestDto) {
 
         return paymentRepositoryCustom.findPaymentListWithPage(pageRequestDto);
+    }
+
+    /**
+     * 관리자 결제 전체 조회
+     */
+    @Transactional(readOnly = true)
+    public PageResponseDto<PaymentResponseDto> searchPaymentListForAdmin(final PageRequestDto pageRequestDto, String keyword) {
+
+        return paymentRepositoryCustom.searchPaymentListWithPage(pageRequestDto, keyword);
     }
 
     /**
