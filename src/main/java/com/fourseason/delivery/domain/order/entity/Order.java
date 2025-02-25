@@ -1,12 +1,13 @@
 package com.fourseason.delivery.domain.order.entity;
 
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.ACCEPTED;
-import static com.fourseason.delivery.domain.order.entity.OrderType.OFFLINE;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.CANCELED;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.PENDING;
+import static com.fourseason.delivery.domain.order.entity.OrderType.OFFLINE;
 import static com.fourseason.delivery.domain.order.entity.OrderType.ONLINE;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ALREADY_CANCELED_ORDER;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_ORDERED_BY_CUSTOMER;
+import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_OWNER_OR_CUSTOMER;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_PENDING_ORDER;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_SHOP_OWNER;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ORDER_CANCEL_EXPIRED;
@@ -14,7 +15,6 @@ import static jakarta.persistence.CascadeType.PERSIST;
 import static jakarta.persistence.FetchType.LAZY;
 
 import com.fourseason.delivery.domain.member.entity.Member;
-import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
 import com.fourseason.delivery.global.exception.CustomException;
@@ -27,6 +27,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -90,22 +91,22 @@ public class Order extends BaseTimeEntity {
     this.totalPrice = totalPrice;
   }
 
-  public static Order addByOnlineOrder(
-      CreateOrderRequestDto dto,
+  public static Order addByCustomer(
       Shop shop,
       Member member,
-      List<OrderMenu> orderMenuList,
-      int totalPrice
+      String address,
+      String instruction,
+      List<OrderMenu> orderMenuList
   ) {
     return Order.builder()
         .shop(shop)
         .member(member)
         .orderStatus(PENDING)
         .orderType(ONLINE)
-        .address(dto.address())
-        .instruction(dto.instruction())
-        .totalPrice(totalPrice)
+        .address(address)
+        .instruction(instruction)
         .orderMenuList(orderMenuList)
+        .totalPrice(orderMenuList.stream().mapToInt(OrderMenu::getTotalPrice).sum())
         .build();
   }
 
@@ -113,8 +114,7 @@ public class Order extends BaseTimeEntity {
       Shop shop,
       String address,
       String instruction,
-      List<OrderMenu> orderMenuList,
-      int totalPrice
+      List<OrderMenu> orderMenuList
   ) {
     return Order.builder()
         .shop(shop)
@@ -122,8 +122,29 @@ public class Order extends BaseTimeEntity {
         .orderType(OFFLINE)
         .address(address)
         .instruction(instruction)
-        .totalPrice(totalPrice)
         .orderMenuList(orderMenuList)
+        .totalPrice(orderMenuList.stream().mapToInt(OrderMenu::getTotalPrice).sum())
+        .build();
+  }
+
+  public static Order addByManager(
+      Shop shop,
+      Member customer,
+      String address,
+      String instruction,
+      List<OrderMenu> orderMenuList,
+      OrderStatus status,
+      OrderType type
+  ) {
+    return Order.builder()
+        .shop(shop)
+        .member(customer)
+        .address(address)
+        .instruction(instruction)
+        .orderMenuList(orderMenuList)
+        .orderStatus(status)
+        .orderType(type)
+        .totalPrice(orderMenuList.stream().mapToInt(OrderMenu::getTotalPrice).sum())
         .build();
   }
 
@@ -134,6 +155,13 @@ public class Order extends BaseTimeEntity {
   public void assertShopOwner(Long ownerId) {
     if (!this.getShop().getMember().getId().equals(ownerId)) {
       throw new CustomException(NOT_SHOP_OWNER);
+    }
+  }
+
+  public void assertOwnerOrCustomer(Long ownerId) {
+    if (!this.getShop().getMember().getId().equals(ownerId)
+        && !this.getMember().getId().equals(ownerId)) {
+      throw new CustomException(NOT_OWNER_OR_CUSTOMER);
     }
   }
 
@@ -149,13 +177,21 @@ public class Order extends BaseTimeEntity {
     }
   }
 
-  public void assertOrderCancelAllowed() {
+  public void assertExpiredCancelTime(Duration time) {
+    if (LocalDateTime.now().isAfter(this.getCreatedAt().plus(time))) {
+      throw new CustomException(ORDER_CANCEL_EXPIRED);
+    }
+  }
+
+  public void assertAlreadyCanceled() {
     if (this.orderStatus == CANCELED) {
       throw new CustomException(ALREADY_CANCELED_ORDER);
     }
+  }
 
-    if (LocalDateTime.now().isAfter(this.getCreatedAt().plusMinutes(5))) {
-      throw new CustomException(ORDER_CANCEL_EXPIRED);
+  public void assertAlreadyDeleted() {
+    if (this.getDeletedAt() != null) {
+      throw new CustomException(ALREADY_CANCELED_ORDER);
     }
   }
 }

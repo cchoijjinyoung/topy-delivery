@@ -14,7 +14,7 @@ public class PageRequestDto {
     private final String order;
 
     @Builder
-    public PageRequestDto(int page, int size, String order) {
+    private PageRequestDto(int page, int size, String order) {
         this.page = page;
         this.size = size;
         this.order = order;

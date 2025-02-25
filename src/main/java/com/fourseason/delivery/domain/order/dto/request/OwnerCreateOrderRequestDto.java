@@ -1,5 +1,9 @@
 package com.fourseason.delivery.domain.order.dto.request;
 
+import static com.fourseason.delivery.domain.member.entity.Role.OWNER;
+
+import com.fourseason.delivery.domain.order.dto.request.OrderCreateDto.OrderMenuCreateDto;
+import com.fourseason.delivery.domain.shop.entity.Shop;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -25,12 +29,24 @@ public record OwnerCreateOrderRequestDto(
 
   @Builder
   public record MenuDto(
-      @NotNull
-      UUID menuId,
+      @NotNull(message = "메뉴 id는 필수 입력 값입니다.") UUID menuId,
+      @Positive(message = "메뉴 수량은 양수여야합니다.") int quantity) {
 
-      @Positive
-      int quantity
-  ) {
+    public OrderMenuCreateDto toOrderMenuCreateDto() {
+      return OrderMenuCreateDto.builder()
+          .menuId(this.menuId)
+          .quantity(this.quantity)
+          .build();
+    }
+  }
 
+  public OrderCreateDto toOrderCreateDto(Shop shop) {
+    return OrderCreateDto.builder()
+        .orderMenuCreateDtoList(this.menuList.stream().map(MenuDto::toOrderMenuCreateDto).toList())
+        .byRole(OWNER)
+        .shop(shop)
+        .address(this.address)
+        .instruction(this.instruction)
+        .build();
   }
 }

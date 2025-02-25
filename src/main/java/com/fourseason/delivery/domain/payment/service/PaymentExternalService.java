@@ -4,6 +4,7 @@ import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.exception.MemberErrorCode;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
 import com.fourseason.delivery.domain.order.entity.Order;
+import com.fourseason.delivery.domain.order.entity.OrderStatus;
 import com.fourseason.delivery.domain.order.exception.OrderErrorCode;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
 import com.fourseason.delivery.domain.payment.dto.request.CancelPaymentRequestDto;
@@ -11,17 +12,20 @@ import com.fourseason.delivery.domain.payment.dto.request.CreatePaymentRequestDt
 import com.fourseason.delivery.domain.payment.entity.Payment;
 import com.fourseason.delivery.domain.payment.exception.CustomRestClientException;
 import com.fourseason.delivery.domain.payment.exception.PaymentErrorCode;
+import com.fourseason.delivery.domain.payment.exception.RestErrorResponse;
 import com.fourseason.delivery.domain.payment.repository.PaymentRepository;
-import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -42,9 +46,7 @@ public class PaymentExternalService {
     /**
      * tossPayment를 통해 결제 승인, payment객체를 받아옴
      */
-    public String confirmPayment(CreatePaymentRequestDto createPaymentRequestDto, CustomPrincipal customPrincipal) {
-        // 결제 검증
-        checkConfirm(createPaymentRequestDto, customPrincipal.getId());
+    public String confirmPayment(CreatePaymentRequestDto createPaymentRequestDto) {
         // 승인 요청
         RestClient restClient = RestClient.create();
         try {
@@ -58,21 +60,19 @@ public class PaymentExternalService {
 
         // 외부 api 호출 과정에서 internal error 발생시
         } catch (HttpStatusCodeException e) {
-            throw new CustomRestClientException(e.getStatusCode(), e.getResponseBodyAsString());
+            throw new CustomRestClientException(e.getStatusCode(), e.getResponseBodyAs(RestErrorResponse.class));
         }
     }
 
     /**
      * 결제 취소
      */
-    public String cancelPayment(UUID paymentId, CancelPaymentRequestDto cancelPaymentRequestDto, CustomPrincipal customPrincipal) {
-        // 취소 검증
-        Payment payment = checkCancel(paymentId, customPrincipal.getId());
+    public String cancelPayment(final CancelPaymentRequestDto cancelPaymentRequestDto, final String paymentKey) {
         // 취소 요청
         RestClient restClient = RestClient.create();
         try {
             return restClient.post()
-                    .uri("https://api.tosspayments.com//v1/payments/" + payment.getPaymentKey() + "/cancel")
+                    .uri("https://api.tosspayments.com//v1/payments/" + paymentKey + "/cancel")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Authorization", authorizations)
                     .body(cancelPaymentRequestDto)
@@ -80,8 +80,8 @@ public class PaymentExternalService {
                     .body(String.class);
 
             // 외부 api 호출 과정에서 internal error 발생시
-        } catch (HttpServerErrorException e) {
-            throw new CustomRestClientException(e.getStatusCode(), e.getResponseBodyAsString());
+        } catch (HttpServerErrorException | HttpClientErrorException e) {
+            throw new CustomRestClientException(e.getStatusCode(), e.getResponseBodyAs(RestErrorResponse.class));
         }
     }
 
@@ -112,6 +112,11 @@ public class PaymentExternalService {
                         () -> new CustomException(PaymentErrorCode.PAYMENT_NOT_FOUND));
         if (!payment.getMember().getId().equals(checkMember(memberId).getId())) {
             throw new CustomException(PaymentErrorCode.PAYMENT_FORBIDDEN);
+        }
+        boolean checkOrderStatus = !payment.getOrder().getOrderStatus().equals(OrderStatus.PENDING);
+        boolean checkPaymentCreatedAt = Duration.between(payment.getCreatedAt(), LocalDateTime.now()).toMinutes() >= 5;
+        if (checkOrderStatus && checkPaymentCreatedAt) {
+            throw new CustomException(PaymentErrorCode.PAYMENT_CANCEL_TIMEOUT);
         }
 
         return payment;

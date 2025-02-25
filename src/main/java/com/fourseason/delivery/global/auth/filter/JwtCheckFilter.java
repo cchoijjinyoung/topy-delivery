@@ -1,8 +1,11 @@
 package com.fourseason.delivery.global.auth.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.auth.JwtUtil;
 import com.fourseason.delivery.global.exception.CustomException;
+import com.fourseason.delivery.global.exception.ErrorCode;
+import com.fourseason.delivery.global.exception.ErrorResponseEntity;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -56,11 +59,9 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-
-        //  Bearer 를 제외한 순수 토큰 값
-        String accessToken = getTokenFromRequest(request);
-
         try {
+            //  Bearer 를 제외한 순수 토큰 값
+            String accessToken = getTokenFromRequest(request);
 
             Claims claims = jwtUtil.validateToken(accessToken);
 //            log.info(claims.toString());
@@ -82,10 +83,12 @@ public class JwtCheckFilter extends OncePerRequestFilter {
 
         } catch (ExpiredJwtException e) {
             log.error(e.getMessage());
-            throw new CustomException(ACCESS_TOKEN_EXPIRED);
+            setErrorResponse(response, ACCESS_TOKEN_EXPIRED);
         } catch (JwtException e) {
             log.error(e.getMessage());
-            throw new CustomException(ACCESS_TOKEN_NOT_AVAILABLE);
+            setErrorResponse(response, ACCESS_TOKEN_NOT_AVAILABLE);
+        } catch (CustomException e) {
+            setErrorResponse(response, e.getErrorCode());
         }
     }
 
@@ -98,5 +101,19 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             // Access Token 이 없거나 prefix 가 Bearer 가 아닌 경우
             throw new CustomException(ACCESS_TOKEN_NOT_FOUND);
         }
+    }
+
+    // error handler
+    private void setErrorResponse(HttpServletResponse response, ErrorCode errorCode) throws IOException {
+        response.setStatus(errorCode.httpStatus().value());
+        response.setContentType("application/json;charset=UTF-8");
+
+        ErrorResponseEntity errorResponse = ErrorResponseEntity.builder()
+                .status(errorCode.httpStatus().value())
+                .message(errorCode.message())
+                .build();
+        String jsonResponse = new ObjectMapper().writeValueAsString(errorResponse);
+
+        response.getWriter().write(jsonResponse);
     }
 }

@@ -16,17 +16,22 @@ import com.fourseason.delivery.domain.shop.repository.CategoryRepository;
 import com.fourseason.delivery.domain.shop.repository.ShopImageRepository;
 import com.fourseason.delivery.domain.shop.repository.ShopRepository;
 import com.fourseason.delivery.domain.shop.repository.ShopRepositoryCustom;
+import com.fourseason.delivery.global.dto.FilterRequestDto;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ShopService {
@@ -50,15 +55,7 @@ public class ShopService {
 
     @Transactional(readOnly = true)
     public ShopResponseDto getShop(final UUID id) {
-        Shop shop = shopRepository.findByIdAndDeletedAtIsNull(id)
-            .orElseThrow(() -> new CustomException(ShopErrorCode.SHOP_NOT_FOUND));
-
-        List<String> images = shopImageRepository.findByShopId(id)
-            .stream()
-            .map(ShopImage::getImageUrl)
-            .toList();
-
-        return ShopResponseDto.of(shop, images);
+        return shopRepositoryCustom.findShop(id);
     }
 
     @Transactional
@@ -72,18 +69,32 @@ public class ShopService {
         Shop shop = Shop.addOf(createShopRequestDto, member, category);
         shopRepository.save(shop);
 
-        for (MultipartFile file : images) {
-            fileService.saveImageFile(S3Folder.SHOP, file, shop.getId());
-        }
+        uploadFiles(images, shop.getId());
     }
 
     @Transactional
-    public void updateShop(final UUID id, UpdateShopRequestDto updateShopRequestDto) {
+    public void updateShop(final UUID id, UpdateShopRequestDto updateShopRequestDto, List<MultipartFile> newImages, final String memberName) {
         Shop shop = shopRepository.findById(id)
             .orElseThrow(() -> new CustomException(ShopErrorCode.SHOP_NOT_FOUND));
 
         Category category = categoryRepository.findByName(updateShopRequestDto.category())
             .orElseThrow(() -> new CustomException(ShopErrorCode.CATEGORY_NOT_FOUND));
+
+        List<UUID> exitingImages = shopImageRepository.findByShopIdAndDeletedByIsNull(id).stream()
+            .map(ShopImage::getId)
+            .toList();
+
+        Set<UUID> imagesSet = new HashSet<>(updateShopRequestDto.images());
+        for (UUID imageId : exitingImages) {
+            if (!imagesSet.contains(imageId)) {
+                ShopImage shopImage = shopImageRepository.findById(imageId)
+                    .orElseThrow(() -> new CustomException(ShopErrorCode.SHOP_IMAGE_NOT_FOUND));
+
+                shopImage.deleteOf(memberName);
+            }
+        }
+
+        uploadFiles(newImages, shop.getId());
 
         shop.updateOf(updateShopRequestDto, category);
     }
@@ -100,7 +111,17 @@ public class ShopService {
     }
 
     @Transactional
-    public PageResponseDto<ShopResponseDto> searchShop(PageRequestDto pageRequestDto, String keyword) {
-        return shopRepositoryCustom.searchShopWithPage(pageRequestDto, keyword);
+    public PageResponseDto<ShopResponseDto> searchShop(PageRequestDto pageRequestDto, String keyword, FilterRequestDto filterRequestDto) {
+        return shopRepositoryCustom.searchShopWithPage(pageRequestDto, keyword, filterRequestDto);
+    }
+
+    private void uploadFiles(List<MultipartFile> images, UUID id) {
+        images = images.stream()
+                .filter(file -> !file.isEmpty())  // 빈 파일 제거
+                .toList();
+
+        for (MultipartFile file : images) {
+            fileService.saveImageFile(S3Folder.SHOP, file, id);
+        }
     }
 }

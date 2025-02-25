@@ -1,5 +1,39 @@
+### 회원가입
+POST http://localhost:8080/api/sign-up
+Content-Type: application/json
+
+{
+    "username": "master",
+    "email": "master@naver.com",
+    "password": "1q2w3e4r!",
+    "phoneNumber": "010-1234-5678",
+    "role": "MASTER"
+}
+
+### 로그인
+POST http://localhost:8080/api/sign-in
+Content-Type: application/json
+
+{
+  "username": "owner",
+  "password": "1q2w3e4r!"
+}
+
+### 공통 주문 상세 조회
+GET http://localhost:8080/api/orders/5c161a0e-9242-442f-bac0-6ab27b3682e7
+Authorization: {{MANAGER_TOKEN}}
+
+### 공통 주문 목록 조회
+GET http://localhost:8080/api/orders?username=manager&page=1&size=20&orderBy=latest
+Authorization: {{OWNER_TOKEN}}
+
+### 공통 주문 취소
+POST http://localhost:8080/api/orders/3e50dce2-cd8d-42c5-aa59-725f69ec9c4f/cancel
+Authorization: {{MANAGER_TOKEN}}
+
 ### 고객 주문 요청
-POST http://localhost:8080/api/customer/orders?memberId=5
+POST http://localhost:8080/api/customer/orders
+Authorization: {{CUSTOMER_TOKEN}}
 Content-Type: application/json
 
 {
@@ -7,42 +41,31 @@ Content-Type: application/json
   "address": "주소",
   "menuList": [
     {
-      "menuId": "00000000-0000-0000-0000-000000000101",
-      "quantity": 1
-    },
-    {
-      "menuId": "00000000-0000-0000-0000-000000000102",
-      "quantity": 2
+      "menuId": "00000000-0000-0000-0000-000000000103",
+      "quantity": 3
     }
   ]
 }
-
-### 고객 주문 상세 조회
-GET http://localhost:8080/api/customer/orders/eb638b55-89d9-42de-9a6d-2426c6c31355?memberId=5
-
-### 고객 주문 리스트 조회
-GET http://localhost:8080/api/customer/orders?memberId=5&page=1&size=20&orderBy=latest
-
-### 고객 주문 취소
-POST http://localhost:8080/api/customer/orders/eb638b55-89d9-42de-9a6d-2426c6c31355/cancel?memberId=5
-
-### 고객 주문 내역 삭제
-DELETE http://localhost:8080/api/customer/orders/ff7c17be-c6dd-4841-9984-7989878ed842?memberId=5
 
 ### 점주 주문 수락
-POST http://localhost:8080/api/owner/orders/adb6b9a4-77e5-4e77-a22f-61cd0f7a7f39/accept?memberId=3
+POST http://localhost:8080/api/owner/orders/8a780d74-7d86-4488-af2d-b6cadf595623/accept
+Authorization: {{OWNER_TOKEN}}
 
 ### 점주 주문 상세 조회
-GET http://localhost:8080/api/owner/orders/ab7d8f4b-43fc-47b5-808b-1de6c3259505?memberId=3
+GET http://localhost:8080/api/owner/orders/f7acd3ca-78a4-445e-a266-5428cb3fd314
+Authorization: {{OWNER_TOKEN}}
 
 ### 점주 주문 목록 조회
-GET http://localhost:8080/api/owner/orders?memberId=3&shopId=00000000-0000-0000-0000-000000000010&page=1&size=20&orderBy=latest
+GET http://localhost:8080/api/owner/orders?shopId=00000000-0000-0000-0000-000000000010&page=1&size=20&orderBy=latest
+Authorization: {{OWNER_TOKEN}}
 
 ### 점주 주문 목록 조회(shop 검색 조건 x)
-GET http://localhost:8080/api/owner/orders?memberId=3&page=1&size=20&orderBy=latest
+GET http://localhost:8080/api/owner/orders?page=1&size=20&orderBy=latest
+Authorization: {{OWNER_TOKEN}}
 
 ### 점주 주문 접수
-POST http://localhost:8080/api/owner/orders?memberId=3
+POST http://localhost:8080/api/owner/orders
+Authorization: {{OWNER_TOKEN}}
 Content-Type: application/json
 
 {
@@ -60,3 +83,24 @@ Content-Type: application/json
   ]
 }
 
+### 관리자 주문 생성
+POST http://localhost:8080/api/manager/orders
+Authorization: {{MANAGER_TOKEN}}
+Content-Type: application/json
+
+{
+  "shopId": "00000000-0000-0000-0000-000000000010",
+  "address": "주소",
+  "menuList": [
+    {
+      "menuId": "00000000-0000-0000-0000-000000000101",
+      "quantity": 1
+    },
+    {
+      "menuId": "00000000-0000-0000-0000-000000000102",
+      "quantity": 2
+    }
+  ],
+  "orderStatus": "PENDING",
+  "orderType": "OFFLINE"
+}
