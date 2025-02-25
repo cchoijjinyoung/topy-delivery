@@ -112,7 +112,7 @@ class ShopServiceTest {
             given(shopImage2.getImageUrl()).willReturn("image2.jpg");
 
             given(shopRepository.findByIdAndDeletedAtIsNull(shopId)).willReturn(Optional.of(shop));
-            given(shopImageRepository.findByShopId(shopId)).willReturn(List.of(shopImage1, shopImage2));
+            given(shopImageRepository.findByShopIdAndDeletedByIsNull(shopId)).willReturn(List.of(shopImage1, shopImage2));
 
             // when
             ShopResponseDto result = shopService.getShop(shopId);
@@ -121,7 +121,7 @@ class ShopServiceTest {
             assertThat(result).isNotNull();
             assertThat(result.images()).hasSize(2);
             then(shopRepository).should().findByIdAndDeletedAtIsNull(shopId);
-            then(shopImageRepository).should().findByShopId(shopId);
+            then(shopImageRepository).should().findByShopIdAndDeletedByIsNull(shopId);
         }
 
         @Test

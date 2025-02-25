@@ -9,5 +9,5 @@ import java.util.UUID;
 
 public interface ShopImageRepository extends JpaRepository<ShopImage, UUID> {
 
-    List<ShopImage> findByShopId(UUID shopId);
+    List<ShopImage> findByShopIdAndDeletedByIsNull(UUID shopId);
 }

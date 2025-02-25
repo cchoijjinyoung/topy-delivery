@@ -5,6 +5,7 @@ import com.fourseason.delivery.domain.shop.dto.request.UpdateShopRequestDto;
 import com.fourseason.delivery.domain.shop.dto.response.ShopResponseDto;
 import com.fourseason.delivery.domain.shop.service.ShopService;
 import com.fourseason.delivery.global.auth.CustomPrincipal;
+import com.fourseason.delivery.global.dto.FilterRequestDto;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.resolver.PageSize;
@@ -60,8 +61,11 @@ public class ShopController {
      * 가게 수정 API
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Void> updateShop(@PathVariable UUID id, @RequestBody @Valid UpdateShopRequestDto updateShopRequestDto) {
-        shopService.updateShop(id, updateShopRequestDto);
+    public ResponseEntity<Void> updateShop(@PathVariable UUID id,
+                                           @RequestPart @Valid UpdateShopRequestDto updateShopRequestDto,
+                                           @RequestPart List<MultipartFile> newImages,
+                                           @AuthenticationPrincipal CustomPrincipal principal) {
+        shopService.updateShop(id, updateShopRequestDto, newImages, principal.getName());
         return ResponseEntity.ok().build();
     }
 
@@ -83,8 +87,11 @@ public class ShopController {
     public ResponseEntity<PageResponseDto<ShopResponseDto>> searchShop(@RequestParam @NotBlank(message = "검색어를 입력해주세요.") String keyword,
                                                                        @RequestParam(defaultValue = "1") int page,
                                                                        @PageSize int size,
-                                                                       @RequestParam(defaultValue = "latest") String orderBy) {
+                                                                       @RequestParam(defaultValue = "latest") String orderBy,
+                                                                       @RequestParam(defaultValue = "category") String category,
+                                                                       @RequestParam(defaultValue = "region") String region) {
         PageRequestDto pageRequestDto = PageRequestDto.of(page-1, size, orderBy);
-        return ResponseEntity.ok(shopService.searchShop(pageRequestDto, keyword));
+        FilterRequestDto filterRequestDto = FilterRequestDto.of(category, region);
+        return ResponseEntity.ok(shopService.searchShop(pageRequestDto, keyword, filterRequestDto));
     }
 }
