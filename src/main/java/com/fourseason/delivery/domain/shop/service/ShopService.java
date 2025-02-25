@@ -53,15 +53,7 @@ public class ShopService {
 
     @Transactional(readOnly = true)
     public ShopResponseDto getShop(final UUID id) {
-        Shop shop = shopRepository.findByIdAndDeletedAtIsNull(id)
-            .orElseThrow(() -> new CustomException(ShopErrorCode.SHOP_NOT_FOUND));
-
-        List<String> images = shopImageRepository.findByShopIdAndDeletedByIsNull(id)
-            .stream()
-            .map(ShopImage::getImageUrl)
-            .toList();
-
-        return ShopResponseDto.of(shop, images);
+        return shopRepositoryCustom.findShop(id);
     }
 
     @Transactional

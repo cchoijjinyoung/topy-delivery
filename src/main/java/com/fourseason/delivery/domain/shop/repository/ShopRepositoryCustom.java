@@ -7,11 +7,10 @@ import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.group.GroupBy;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -19,18 +18,57 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.querydsl.core.group.GroupBy.list;
 import static com.querydsl.core.group.GroupBy.groupBy;
 
 import static com.fourseason.delivery.domain.shop.entity.QShop.shop;
 import static com.fourseason.delivery.domain.shop.entity.QShopImage.shopImage;
+import static com.fourseason.delivery.domain.review.entity.QReview.review;
 
 @Repository
 @RequiredArgsConstructor
 public class ShopRepositoryCustom {
 
     private final JPAQueryFactory jpaQueryFactory;
+
+    /**
+     * 가게 상세 조회
+     */
+    public ShopResponseDto findShop(UUID id) {
+        return jpaQueryFactory
+            .from(shop)
+            .leftJoin(shopImage).on(shop.id.eq(shopImage.shop.id)
+                .and(shopImage.deletedAt.isNull())
+            )
+            .where(shop.id.eq(id)
+                .and(shop.deletedAt.isNull())
+            )
+            .transform(
+                groupBy(shop.id).list(
+                    Projections.constructor(ShopResponseDto.class,
+                        Expressions.stringTemplate("CAST({0} AS string)", shop.id),
+                        shop.name,
+                        shop.description,
+                        shop.tel,
+                        shop.address,
+                        shop.detailAddress,
+                        list(shopImage.imageUrl),
+                        JPAExpressions
+                            .select(review.rating.avg().coalesce(0.0))
+                            .from(review)
+                            .where(review.shop.id.eq(shop.id)
+                                .and(review.deletedAt.isNull()
+                            )
+                        )
+                    )
+                )
+            )
+            .stream()
+            .findFirst()
+            .orElseThrow(() -> new CustomException(ShopErrorCode.SHOP_NOT_FOUND));
+    }
 
     /**
      * 가게 목록 조회
@@ -71,7 +109,14 @@ public class ShopRepositoryCustom {
                     shop.tel,
                     shop.address,
                     shop.detailAddress,
-                    list(shopImage.imageUrl)
+                    list(shopImage.imageUrl),
+                    JPAExpressions
+                        .select(review.rating.avg().coalesce(0.0))
+                        .from(review)
+                        .where(review.shop.id.eq(shop.id)
+                            .and(review.deletedAt.isNull()
+                        )
+                    )
                 )
             ));
     }
@@ -95,7 +140,14 @@ public class ShopRepositoryCustom {
                     shop.tel,
                     shop.address,
                     shop.detailAddress,
-                    list(shopImage.imageUrl)
+                    list(shopImage.imageUrl),
+                    JPAExpressions
+                        .select(review.rating.avg().coalesce(0.0))
+                        .from(review)
+                        .where(review.shop.id.eq(shop.id)
+                            .and(review.deletedAt.isNull()
+                        )
+                    )
                 )
             ));
     }
@@ -133,7 +185,6 @@ public class ShopRepositoryCustom {
         BooleanBuilder builder = new BooleanBuilder();
 
         return builder.and(shop.deletedAt.isNull());
-
     }
 
     /**

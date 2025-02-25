@@ -19,7 +19,9 @@ public record ShopResponseDto(
 
         String detailAddress,
 
-        List<String> images
+        List<String> images,
+
+        double reviewAvg
 ) {
     public static ShopResponseDto of(Shop shop, List<String> images) {
         return ShopResponseDto.builder()
