@@ -111,8 +111,10 @@ class ShopServiceTest {
             ShopImage shopImage2 = Mockito.spy(ShopImage.class);
             given(shopImage2.getImageUrl()).willReturn("image2.jpg");
 
-            given(shopRepository.findByIdAndDeletedAtIsNull(shopId)).willReturn(Optional.of(shop));
-            given(shopImageRepository.findByShopIdAndDeletedByIsNull(shopId)).willReturn(List.of(shopImage1, shopImage2));
+            double reviewAvg = 4.5;
+
+            ShopResponseDto shopResponseDto = ShopResponseDto.of(shop, List.of(shopImage1.getImageUrl(), shopImage2.getImageUrl()), reviewAvg);
+            given(shopRepositoryCustom.findShop(shopId)).willReturn(shopResponseDto);
 
             // when
             ShopResponseDto result = shopService.getShop(shopId);
@@ -120,22 +122,22 @@ class ShopServiceTest {
             // then
             assertThat(result).isNotNull();
             assertThat(result.images()).hasSize(2);
-            then(shopRepository).should().findByIdAndDeletedAtIsNull(shopId);
-            then(shopImageRepository).should().findByShopIdAndDeletedByIsNull(shopId);
+            assertThat(result.reviewAvg()).isEqualTo(reviewAvg);
+            then(shopRepositoryCustom).should().findShop(shopId);
         }
 
         @Test
         @DisplayName("실패 - 존재하지 않는 가게")
         void 실패_존재하지_않는_가게() {
             // given
-            given(shopRepository.findByIdAndDeletedAtIsNull(shopId)).willReturn(Optional.empty());
+            given(shopRepositoryCustom.findShop(shopId)).willThrow(new CustomException(ShopErrorCode.SHOP_NOT_FOUND));
 
             // when & then
             assertThatThrownBy(() -> shopService.getShop(shopId))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessageContaining(ShopErrorCode.SHOP_NOT_FOUND.getMessage());
+                .isInstanceOf(CustomException.class)
+                .hasMessageContaining(ShopErrorCode.SHOP_NOT_FOUND.getMessage());
 
-            then(shopRepository).should().findByIdAndDeletedAtIsNull(shopId);
+            then(shopRepositoryCustom).should().findShop(shopId);
         }
     }
 

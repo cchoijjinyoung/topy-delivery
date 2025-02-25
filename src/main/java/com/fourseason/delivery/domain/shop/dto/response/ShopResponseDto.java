@@ -23,7 +23,7 @@ public record ShopResponseDto(
 
         double reviewAvg
 ) {
-    public static ShopResponseDto of(Shop shop, List<String> images) {
+    public static ShopResponseDto of(Shop shop, List<String> images, double reviewAvg) {
         return ShopResponseDto.builder()
             .id(shop.getId().toString())
             .name(shop.getName())
@@ -32,6 +32,7 @@ public record ShopResponseDto(
             .address(shop.getAddress())
             .detailAddress(shop.getDetailAddress())
             .images(images)
+            .reviewAvg(reviewAvg)
             .build();
     }
 }
