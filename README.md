@@ -24,7 +24,7 @@
 |Framework|Spring Boot 3.4.2|
 |Repository|PostgreSQL 16.3|
 |Build Tool|Gradle 8.12.1|
-|DevOps - dev | EC2, RDS(PostreSQL), S3, Docker, Gihub Actions|
+|DevOps - dev | EC2, RDS(PostgreSQL), S3, Docker, Gihub Actions|
 
 
 <br><br>
@@ -39,10 +39,10 @@ git clone https://github.com/4S1JIN/s1jin-delivery.git
 ### 2. 로컬 DB 세팅을 위해 docker-compose up하기
 - docker를 미리 설치해야한다.
 - 프로젝트의 루트 폴더에 존재하는 `docker-compose.yml`를 들어가서 service 를 up 해준다.
-- (참고) 현재는 postgresql만 존재하고 포트는 `5432:5432` 이다.
+- (참고) 현재는 PostgreSQL만 존재하고 포트는 `5432:5432` 이다.
 
 ### 3. 애플리케이션 정상 실행 확인
-- 스프링 애플리케이션 (`DeliveryApplication`)이 정상 실행되는 지 확인한다.
+- 스프링 애플리케이션 (`DeliveryApplication`)이 정상 실행되는지 확인한다.
 
 <br><br>
 
@@ -58,9 +58,8 @@ git clone https://github.com/4S1JIN/s1jin-delivery.git
 
 ## 개발 산출물
 
-- [트러블 슈팅](https://github.com/4S1JIN/s1jin-delivery/wiki/%ED%8A%B8%EB%9F%AC%EB%B8%94-%EC%8A%88%ED%8C%85)
-- 공통 관심 사항
-  - 권한 별 기능 분기 처리
+- [트러블 슈팅](https://github.com/4S1JIN/s1jin-delivery/wiki/%F0%9F%9A%A8-%ED%8A%B8%EB%9F%AC%EB%B8%94-%EC%8A%88%ED%8C%85)
+- [공통 관심 사항](https://github.com/4S1JIN/s1jin-delivery/wiki/%EA%B8%80%EB%A1%9C%EB%B2%8C-%EA%B3%B5%ED%86%B5-%EB%AA%A8%EB%93%88)
 - 테스트 코드
   - 전체 작성된 테스트 코드 수 : 
   - [계층별 테스트 코드 작성 전략](https://github.com/4S1JIN/s1jin-delivery/wiki/%ED%85%8C%EC%8A%A4%ED%8A%B8-%EC%BD%94%EB%93%9C-%EC%9E%91%EC%84%B1-%EC%A0%84%EB%9E%B5)
@@ -144,8 +143,8 @@ API Statistics
   - CDN 도입
   - Nginx, MinIO등 별도의 파일 서버 구축
 
-### 2) Redis를 활용한 Refesh Token 관리
-- 문제점 : 현재는 Refrest Token을 서버에 저장하고 있지 않아 발행 후 관리에 문제가 생길 수 있음
+### 2) Redis를 활용한 Refresh Token 관리
+- 문제점 : 현재는 Refresh Token을 서버에 저장하고 있지 않아 발행 후 관리에 문제가 생길 수 있음
 - 개선 계획
   - TTL(자동 만료), In-Memory DB의 강점(보안, 속도), 분산 서버 환경에서도 공유된 Redis를 사용한 토큰 관리 등의 장점이 있는 Redis를 활용해 Refresh Token을 관리 
 

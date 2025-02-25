@@ -2,11 +2,10 @@ package com.fourseason.delivery.domain.order.service;
 
 import static com.fourseason.delivery.domain.member.entity.Role.CUSTOMER;
 import static com.fourseason.delivery.domain.member.entity.Role.OWNER;
-import static com.fourseason.delivery.domain.menu.entity.MenuStatus.SHOW;
+import static com.fourseason.delivery.domain.member.exception.MemberErrorCode.MEMBER_NOT_FOUND;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.CANCELED;
 import static com.fourseason.delivery.domain.order.entity.OrderStatus.PENDING;
 import static com.fourseason.delivery.domain.order.entity.OrderType.ONLINE;
-import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.MEMBER_NOT_FOUND;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ORDER_NOT_FOUND;
 import static com.fourseason.delivery.domain.shop.exception.ShopErrorCode.SHOP_NOT_FOUND;
 import static com.fourseason.delivery.fixture.MemberFixture.createMember;
@@ -17,25 +16,29 @@ import static com.fourseason.delivery.fixture.OrderMenuFixture.createOrderMenuWi
 import static com.fourseason.delivery.fixture.ShopFixture.createShop;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.member.repository.MemberRepository;
-import com.fourseason.delivery.domain.menu.repository.MenuRepository;
-import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto;
-import com.fourseason.delivery.domain.order.dto.request.CreateOrderRequestDto.MenuDto;
-import com.fourseason.delivery.domain.order.dto.response.OrderDetailResponseDto;
+import com.fourseason.delivery.domain.order.dto.request.CustomerCreateOrderRequestDto;
+import com.fourseason.delivery.domain.order.dto.response.impl.CustomerOrderDetailsResponseDto;
+import com.fourseason.delivery.domain.order.dto.response.impl.CustomerOrderSummaryResponseDto;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderMenu;
 import com.fourseason.delivery.domain.order.repository.OrderRepository;
+import com.fourseason.delivery.domain.order.repository.OrderSearchRepositoryCustom;
 import com.fourseason.delivery.domain.shop.entity.Shop;
 import com.fourseason.delivery.domain.shop.repository.ShopRepository;
+import com.fourseason.delivery.fixture.ShopFixture;
+import com.fourseason.delivery.global.dto.PageRequestDto;
+import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.exception.CustomException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -48,112 +51,127 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class OrderCustomerServiceTest {
 
   @Mock
-  OrderRepository orderRepository;
-
-  @Mock
   ShopRepository shopRepository;
 
   @Mock
   MemberRepository memberRepository;
 
   @Mock
-  MenuRepository menuRepository;
+  OrderMenuListBuilder orderMenuListBuilder;
+
+  @Mock
+  OrderRepository orderRepository;
+
+  @Mock
+  OrderSearchRepositoryCustom orderSearchRepositoryCustom;
 
   @InjectMocks
   OrderCustomerService orderCustomerService;
 
   @Nested
-  class createOrderTest {
+  class CreateOrder {
 
-    MenuDto menuDto1;
-    List<MenuDto> menuList;
-    CreateOrderRequestDto request;
-    Long memberId;
-
-    @BeforeEach
-    void setup() {
-      menuDto1 = MenuDto.builder()
-          .menuId(UUID.randomUUID())
-          .quantity(2)
-          .build();
-
-      menuList = new ArrayList<>();
-      menuList.add(menuDto1);
-
-      request = CreateOrderRequestDto.builder()
+    @Test
+    @DisplayName("고객 비대면 주문 요청 시, 존재하지 않는 가게면 예외가 발생한다.")
+    void not_found_shop() {
+      // given
+      CustomerCreateOrderRequestDto request = CustomerCreateOrderRequestDto.builder()
           .shopId(UUID.randomUUID())
-          .instruction("단무지 안주셔도 돼요!")
-          .menuList(menuList)
+          .address("배달 주소")
+          .instruction("요청 사항")
+          .menuList(List.of())
           .build();
 
-      memberId = 1L;
-    }
+      Member loginMember = createMember(CUSTOMER);
 
-    @Test
-    @DisplayName("주문 요청 시 존재하지 않은 회원이면, 예외가 발생한다.")
-    void user_not_found() {
-      // given
-      when(memberRepository.findById(memberId)).thenThrow(new CustomException(MEMBER_NOT_FOUND));
-
-      // when
-      // then
-      assertThatThrownBy(
-          () -> orderCustomerService.createOrder(request, memberId))
-          .isInstanceOf(CustomException.class)
-          .hasMessage("해당 회원을 찾을 수 없습니다.");
-    }
-
-    @Test
-    @DisplayName("주문 요청 시 존재하지 않은 가게면, 예외가 발생한다.")
-    void shop_not_found() {
-      // given
-      Member member = createMember(CUSTOMER);
-
-      when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
-      when(shopRepository.findById(request.shopId())).thenThrow(
+      when(shopRepository.findByIdAndDeletedAtIsNull(request.shopId())).thenThrow(
           new CustomException(SHOP_NOT_FOUND));
 
       // when
       // then
       assertThatThrownBy(
-          () -> orderCustomerService.createOrder(request, memberId))
+          () -> orderCustomerService.createOnlineOrder(request, loginMember.getId()))
           .isInstanceOf(CustomException.class)
           .hasMessage("해당 가게를 찾을 수 없습니다.");
     }
 
     @Test
-    @DisplayName("주문 요청 시 존재하지 않은 메뉴면, 예외가 발생한다.")
-    void menu_not_found() {
+    @DisplayName("고객 비대면 주문 요청 시, 존재하지 않는 고객이면 예외가 발생한다.")
+    void not_found_customer() {
       // given
-      Member member = createMember(CUSTOMER);
-      Member owner = createMember(OWNER);
-      Shop shop = createShop(owner);
+      CustomerCreateOrderRequestDto request = CustomerCreateOrderRequestDto.builder()
+          .shopId(UUID.randomUUID())
+          .address("배달 주소")
+          .instruction("요청 사항")
+          .menuList(List.of())
+          .build();
 
-      when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
-      when(shopRepository.findById(request.shopId())).thenReturn(
-          Optional.of(shop));
-      when(menuRepository.findByIdInAndMenuStatusAndShopAndDeletedAtIsNull(
-          List.of(request.menuList().get(0).menuId()), SHOW, shop))
-          .thenReturn(List.of());
+      Member loginMember = createMember(CUSTOMER);
+
+      Member owner = createMember(OWNER);
+      Shop shop = ShopFixture.createShop(owner);
+
+      when(shopRepository.findByIdAndDeletedAtIsNull(request.shopId())).thenReturn(Optional.of(shop));
+
+      when(memberRepository.findByIdAndDeletedAtIsNull(loginMember.getId())).thenThrow(
+          new CustomException(MEMBER_NOT_FOUND));
 
       // when
       // then
-      assertThatThrownBy(() -> orderCustomerService.createOrder(request, memberId))
+      assertThatThrownBy(
+          () -> orderCustomerService.createOnlineOrder(request, loginMember.getId()))
           .isInstanceOf(CustomException.class)
-          .hasMessage("해당 메뉴를 찾을 수 없습니다.");
+          .hasMessage("해당 사용자를 찾을 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("고객 비대면 주문 요청 성공")
+    void success() {
+      // given
+      CustomerCreateOrderRequestDto request = CustomerCreateOrderRequestDto.builder()
+          .shopId(UUID.randomUUID())
+          .address("배달 주소")
+          .instruction("요청 사항")
+          .menuList(List.of())
+          .build();
+
+      Member loginMember = createMember(CUSTOMER);
+
+      Member owner = createMember(OWNER);
+      Shop shop = ShopFixture.createShop(owner);
+      List<OrderMenu> orderMenuList = createOrderMenuList(
+          createOrderMenuWithQuantity("치킨", 10000, 1),
+          createOrderMenuWithQuantity("피자", 10000, 2),
+          createOrderMenuWithQuantity("족발", 10000, 3)
+
+      );
+      Order order = createOrder(loginMember, shop, PENDING, ONLINE, orderMenuList);
+
+      when(shopRepository.findByIdAndDeletedAtIsNull(request.shopId())).thenReturn(Optional.of(shop));
+      when(memberRepository.findByIdAndDeletedAtIsNull(loginMember.getId())).thenReturn(Optional.of(loginMember));
+      when(orderMenuListBuilder.create(request.toOrderCreateDto(shop, loginMember)))
+          .thenReturn(orderMenuList);
+      when(orderRepository.save(any())).thenReturn(order);
+
+      // when
+      UUID savedOrderId = orderCustomerService.createOnlineOrder(request, loginMember.getId());
+
+      // then
+      verify(orderMenuListBuilder).create(request.toOrderCreateDto(shop, loginMember));
+      assertThat(savedOrderId).isEqualTo(order.getId());
     }
   }
 
   @Nested
-  class getOrder {
+  class GetOrder {
 
     @Test
-    @DisplayName("고객 단건 주문 조회 시, 존재하지 않는 주문이면 예외가 발생한다.")
+    @DisplayName("고객이 주문 상세 조회 시, 존재하지 않는 주문이면 예외가 발생한다.")
     void order_not_found() {
       // given
       Member loginMember = createMember(CUSTOMER);
       UUID orderId = UUID.randomUUID();
-      when(orderRepository.findById(orderId)).thenThrow(new CustomException(ORDER_NOT_FOUND));
+      when(orderRepository.findByIdAndDeletedAtIsNull(orderId)).thenThrow(new CustomException(ORDER_NOT_FOUND));
 
       // when
       // then
@@ -163,38 +181,30 @@ class OrderCustomerServiceTest {
     }
 
     @Test
-    @DisplayName("고객 단건 주문 조회 시, 해당 주문을 요청한 고객이 아니면 예외가 발생한다.")
+    @DisplayName("고객이 주문 상세 조회 시, 주문한 고객이 아니면 예외가 발생한다.")
     void not_ordered_by_customer() {
       // given
       Member loginMember = createMember(CUSTOMER);
 
-      Member owner = createMember(OWNER);
-      Shop shop = createShop(owner);
-      List<OrderMenu> orderMenuList = createOrderMenuList(
-          createOrderMenuWithQuantity("치킨", 5000, 1),
-          createOrderMenuWithQuantity("피자", 10000, 2),
-          createOrderMenuWithQuantity("족발", 20000, 3)
-      );
-
-      Member another = createMember(CUSTOMER);
-      Order order = createOrder(another, shop, PENDING, ONLINE, orderMenuList);
-      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+      Order order = createOrder();
 
       // when
+      when(orderRepository.findByIdAndDeletedAtIsNull(order.getId())).thenReturn(Optional.of(order));
+
       // then
-      assertThatThrownBy(() -> orderCustomerService.getOrder(order.getId(), loginMember.getId()))
+      assertThatThrownBy(() -> orderCustomerService.getOrder(
+          order.getId(), loginMember.getId()))
           .isInstanceOf(CustomException.class)
           .hasMessage("해당 주문을 요청한 고객이 아닙니다.");
     }
 
     @Test
-    @DisplayName("고객 단건 주문 조회 성공")
+    @DisplayName("고객 주문 상세 조회 성공")
     void success() {
       // given
       Member loginMember = createMember(CUSTOMER);
 
-      Member owner = createMember(OWNER);
-      Shop shop = createShop(owner);
+      Shop shop = createShop(loginMember);
       List<OrderMenu> orderMenuList = createOrderMenuList(
           createOrderMenuWithQuantity("치킨", 5000, 1),
           createOrderMenuWithQuantity("피자", 10000, 2),
@@ -202,10 +212,10 @@ class OrderCustomerServiceTest {
       );
 
       Order order = createOrder(loginMember, shop, PENDING, ONLINE, orderMenuList);
-      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+      when(orderRepository.findByIdAndDeletedAtIsNull(order.getId())).thenReturn(Optional.of(order));
 
       // when
-      OrderDetailResponseDto response = orderCustomerService.getOrder(order.getId(),
+      CustomerOrderDetailsResponseDto response = orderCustomerService.getOrder(order.getId(),
           loginMember.getId());
 
       // then
@@ -225,6 +235,53 @@ class OrderCustomerServiceTest {
   }
 
   @Nested
+  class GetOrderList {
+
+    @Test
+    @DisplayName("고객 주문 목록 조회 시, 회원 본인의 주문 목록이 아니면 예외가 발생한다.")
+    void not_ordered_by_customer() {
+      // given
+      String username = "want";
+      String loginMemberUsername = "me";
+      PageRequestDto pageRequestDto = PageRequestDto.of(0, 10, "latest");
+      String keyword = "sampleKeyword";
+
+      // when
+      // then
+      assertThatThrownBy(() -> orderCustomerService.getOrderList(
+          username, loginMemberUsername, pageRequestDto, keyword))
+          .isInstanceOf(CustomException.class)
+          .hasMessage("주문 조회 권한이 없습니다.");
+    }
+
+    @Test
+    @DisplayName("고객 주문 목록 조회 성공")
+    void success() {
+      // given
+      String username = "want";
+      String loginMemberUsername = "want";
+      PageRequestDto pageRequestDto = PageRequestDto.of(0, 10, "latest");
+      String keyword = "sampleKeyword";
+
+      PageResponseDto<CustomerOrderSummaryResponseDto> expectedResponse =
+          new PageResponseDto<>(Collections.singletonList(
+              new CustomerOrderSummaryResponseDto(createOrder())
+          ), 1L);
+
+      when(orderSearchRepositoryCustom.findByCustomerWithPage(username, pageRequestDto, keyword))
+          .thenReturn(expectedResponse);
+
+      // when
+      PageResponseDto<CustomerOrderSummaryResponseDto> actualResponse =
+          orderCustomerService.getOrderList(username, loginMemberUsername, pageRequestDto, keyword);
+
+      // then
+      assertThat(expectedResponse).isEqualTo(actualResponse);
+      verify(orderSearchRepositoryCustom).findByCustomerWithPage(username, pageRequestDto, keyword);
+    }
+  }
+
+  @Nested
   class CancelOrder {
 
     @Test
@@ -233,7 +290,7 @@ class OrderCustomerServiceTest {
       // given
       Member loginMember = createMember(CUSTOMER);
       UUID orderId = UUID.randomUUID();
-      when(orderRepository.findById(orderId)).thenThrow(new CustomException(ORDER_NOT_FOUND));
+      when(orderRepository.findByIdAndDeletedAtIsNull(orderId)).thenThrow(new CustomException(ORDER_NOT_FOUND));
 
       // when
       // then
@@ -258,7 +315,7 @@ class OrderCustomerServiceTest {
 
       Member another = createMember(CUSTOMER);
       Order order = createOrder(another, shop, PENDING, ONLINE, orderMenuList);
-      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+      when(orderRepository.findByIdAndDeletedAtIsNull(order.getId())).thenReturn(Optional.of(order));
 
       // when
       // then
@@ -282,7 +339,7 @@ class OrderCustomerServiceTest {
       );
 
       Order canceledOrder = createOrder(loginMember, shop, CANCELED, ONLINE, orderMenuList);
-      when(orderRepository.findById(canceledOrder.getId())).thenReturn(Optional.of(canceledOrder));
+      when(orderRepository.findByIdAndDeletedAtIsNull(canceledOrder.getId())).thenReturn(Optional.of(canceledOrder));
 
       // when
       // then
@@ -308,7 +365,7 @@ class OrderCustomerServiceTest {
 
       Order order = createExpiredOrder(loginMember, shop, PENDING, ONLINE, orderMenuList);
 
-      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+      when(orderRepository.findByIdAndDeletedAtIsNull(order.getId())).thenReturn(Optional.of(order));
 
       // when
       // then
@@ -333,87 +390,13 @@ class OrderCustomerServiceTest {
 
       Order order = createOrder(loginMember, shop, PENDING, ONLINE, orderMenuList);
 
-      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+      when(orderRepository.findByIdAndDeletedAtIsNull(order.getId())).thenReturn(Optional.of(order));
 
       // when
       orderCustomerService.cancelOrder(order.getId(), loginMember.getId());
 
       // then
       assertThat(order.getOrderStatus()).isEqualTo(CANCELED);
-    }
-  }
-
-  @Nested
-  class DeleteOrder {
-
-    @Test
-    @DisplayName("고객이 주문 삭제 시, 존재하지 않는 주문이면 예외가 발생한다.")
-    void order_not_found() {
-      // given
-      Member loginMember = createMember(CUSTOMER);
-      when(memberRepository.findById(loginMember.getId())).thenReturn(Optional.of(loginMember));
-
-      UUID orderId = UUID.randomUUID();
-      when(orderRepository.findById(orderId)).thenThrow(new CustomException(ORDER_NOT_FOUND));
-
-      // when
-      // then
-      assertThatThrownBy(() -> orderCustomerService.deleteOrder(orderId, loginMember.getId()))
-          .isInstanceOf(CustomException.class)
-          .hasMessage("해당 주문을 찾을 수 없습니다.");
-    }
-
-    @Test
-    @DisplayName("고객이 주문 삭제 시, 해당 주문을 요청한 고객이 아니면 예외가 발생한다.")
-    void not_ordered_by_customer() {
-      // given
-      Member loginMember = createMember(CUSTOMER);
-      when(memberRepository.findById(loginMember.getId())).thenReturn(Optional.of(loginMember));
-
-      Member owner = createMember(OWNER);
-      Shop shop = createShop(owner);
-      List<OrderMenu> orderMenuList = createOrderMenuList(
-          createOrderMenuWithQuantity("치킨", 5000, 1),
-          createOrderMenuWithQuantity("피자", 10000, 2),
-          createOrderMenuWithQuantity("족발", 20000, 3)
-      );
-
-      Member another = createMember(CUSTOMER);
-      Order order = createOrder(another, shop, PENDING, ONLINE, orderMenuList);
-      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
-
-      // when
-      // then
-      assertThatThrownBy(() -> orderCustomerService.deleteOrder(order.getId(), loginMember.getId()))
-          .isInstanceOf(CustomException.class)
-          .hasMessage("해당 주문을 요청한 고객이 아닙니다.");
-    }
-
-    @Test
-    @DisplayName("고객의 주문 삭제 성공")
-    void success() {
-      // given
-      Member loginMember = createMember(CUSTOMER);
-      when(memberRepository.findById(loginMember.getId())).thenReturn(Optional.of(loginMember));
-
-      Member owner = createMember(OWNER);
-      Shop shop = createShop(owner);
-      List<OrderMenu> orderMenuList = createOrderMenuList(
-          createOrderMenuWithQuantity("치킨", 5000, 1),
-          createOrderMenuWithQuantity("피자", 10000, 2),
-          createOrderMenuWithQuantity("족발", 20000, 3)
-      );
-
-      Order order = createOrder(loginMember, shop, PENDING, ONLINE, orderMenuList);
-
-      when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
-
-      // when
-      orderCustomerService.deleteOrder(order.getId(), loginMember.getId());
-
-      // then
-      assertThat(order.getDeletedAt()).isNotNull();
-      assertThat(order.getDeletedBy()).isEqualTo(loginMember.getUsername());
     }
   }
 }

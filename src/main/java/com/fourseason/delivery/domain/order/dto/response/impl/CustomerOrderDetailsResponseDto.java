@@ -1,5 +1,8 @@
-package com.fourseason.delivery.domain.order.dto.response;
+package com.fourseason.delivery.domain.order.dto.response.impl;
 
+import static java.util.stream.Collectors.toList;
+
+import com.fourseason.delivery.domain.order.dto.response.OrderDetailsResponseDto;
 import com.fourseason.delivery.domain.order.entity.Order;
 import com.fourseason.delivery.domain.order.entity.OrderMenu;
 import com.fourseason.delivery.domain.order.entity.OrderStatus;
@@ -8,10 +11,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Builder;
 
-public record OwnerOrderDetailResponseDto(
+public record CustomerOrderDetailsResponseDto(
     String shopName,
     String address,
-    String orderedUsername,
     String instruction,
     Integer totalPrice,
     OrderStatus status,
@@ -20,28 +22,26 @@ public record OwnerOrderDetailResponseDto(
     LocalDateTime createdAt,
     LocalDateTime updatedAt,
     String updatedBy
-) {
+) implements OrderDetailsResponseDto {
 
-  public OwnerOrderDetailResponseDto(Order order) {
+  public CustomerOrderDetailsResponseDto(Order order) {
     this(order.getShop().getName(),
         order.getAddress(),
-        order.getMember().getUsername(),
         order.getInstruction(),
         order.getTotalPrice(),
         order.getOrderStatus(),
         order.getOrderType(),
-        order.getOrderMenuList().stream().map(MenuDto::of).toList(),
+        order.getOrderMenuList().stream().map(MenuDto::of).collect(toList()),
         order.getCreatedAt(),
         order.getUpdatedAt(),
         order.getUpdatedBy()
     );
   }
 
-  public static OwnerOrderDetailResponseDto of(Order order) {
-    return new OwnerOrderDetailResponseDto(
+  public static CustomerOrderDetailsResponseDto of(Order order) {
+    return new CustomerOrderDetailsResponseDto(
         order.getShop().getName(),
         order.getAddress(),
-        order.getMember() == null ? "" : order.getMember().getUsername(),
         order.getInstruction(),
         order.getTotalPrice(),
         order.getOrderStatus(),
