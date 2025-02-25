@@ -70,27 +70,37 @@ git clone https://github.com/4S1JIN/s1jin-delivery.git
 <details>
   <summary>설계 대비 구현률</summary>
 
-  - 설계 API 수 : <br>
-  - 구현 API 수 : 50 <br>
+  - 설계 API 수 : 44 <br>
+  - 구현 API 수 : 54 <br>
   - 설계 대비 구현률 : <br>
   
   ```java
-  API Count Summary
+API Count Summary
 ==========================
-  - OrderOwnerController.java
+  - CommonOrderController.java
     ├── GET APIs:        2
-    ├── POST APIs:        3
-  - OrderCustomerController.java
-    ├── GET APIs:        2
+    ├── POST APIs:        1
+  - OwnerOrderController.java
+    ├── GET APIs:        1
     ├── POST APIs:        2
+  - CustomerOrderController.java
+    ├── POST APIs:        1
+  - ManagerOrderController.java
+    ├── GET APIs:        1
+    ├── POST APIs:        1
     └── DELETE APIs:        1
+  - OwnerPaymentController.java
+    ├── GET APIs:        2
+    ├── PUT APIs:        1
   - PaymentHtmlController.java
     ├── GET APIs:        3
-  - PaymentController.java
-    ├── GET APIs:        4
+  - AdminPaymentController.java
+    ├── GET APIs:        3
+    └── DELETE APIs:        1
+  - CustomerPaymentController.java
+    ├── GET APIs:        2
     ├── POST APIs:        1
     ├── PUT APIs:        1
-    └── DELETE APIs:        1
   - ShopController.java
     ├── GET APIs:        3
     ├── POST APIs:        1
@@ -124,12 +134,13 @@ git clone https://github.com/4S1JIN/s1jin-delivery.git
 ==========================
 API Statistics
 ==========================
-- GET APIs: 22
+- GET APIs: 25
 - POST APIs: 15
-- PUT APIs: 6
+- PUT APIs: 7
 - DELETE APIs: 7
-- Total APIs: 50
+- Total APIs: 54
 ==========================
+
 ```
 
 </details>
