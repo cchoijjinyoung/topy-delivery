@@ -88,4 +88,8 @@ public class Payment extends BaseTimeEntity {
     public void deleteOf(final String deletedBy) {
         super.deleteOf(deletedBy);
     }
+
+    public boolean isPaymentCompleted() {
+        return paymentStatus.equals("DONE");
+    }
 }

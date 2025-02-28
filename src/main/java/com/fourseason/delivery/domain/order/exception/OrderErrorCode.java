@@ -17,7 +17,6 @@ public enum OrderErrorCode implements ErrorCode {
 
   NOT_OWNER_OR_CUSTOMER(FORBIDDEN, "가게 주인이거나 주문 고객이어야 합니다."),
   NOT_ORDERED_BY_CUSTOMER(FORBIDDEN, "해당 주문을 요청한 고객이 아닙니다."),
-  NOT_SHOP_OWNER(FORBIDDEN, "가게 주인이 아닙니다."),
   NOT_CREATE_ORDER_PERMISSION(FORBIDDEN, "주문 생성 권한이 없습니다."),
   NOT_READ_ORDER_PERMISSION(FORBIDDEN, "주문 조회 권한이 없습니다."),
 

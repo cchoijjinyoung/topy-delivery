@@ -9,7 +9,6 @@ import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ALRE
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_ORDERED_BY_CUSTOMER;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_OWNER_OR_CUSTOMER;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_PENDING_ORDER;
-import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.NOT_SHOP_OWNER;
 import static com.fourseason.delivery.domain.order.exception.OrderErrorCode.ORDER_CANCEL_EXPIRED;
 import static jakarta.persistence.CascadeType.PERSIST;
 import static jakarta.persistence.FetchType.LAZY;
@@ -91,7 +90,7 @@ public class Order extends BaseTimeEntity {
     this.totalPrice = totalPrice;
   }
 
-  public static Order addByCustomer(
+  public static Order createByOnlineOrder(
       Shop shop,
       Member member,
       String address,
@@ -110,7 +109,7 @@ public class Order extends BaseTimeEntity {
         .build();
   }
 
-  public static Order addByOwner(
+  public static Order createByOfflineOrder(
       Shop shop,
       String address,
       String instruction,
@@ -127,7 +126,7 @@ public class Order extends BaseTimeEntity {
         .build();
   }
 
-  public static Order addByManager(
+  public static Order createByManager(
       Shop shop,
       Member customer,
       String address,
@@ -148,50 +147,52 @@ public class Order extends BaseTimeEntity {
         .build();
   }
 
-  public void updateStatus(OrderStatus orderStatus) {
-    this.orderStatus = orderStatus;
+  public void accepted() {
+    updateStatus(ACCEPTED);
   }
 
-  public void assertShopOwner(Long ownerId) {
-    if (!this.getShop().getMember().getId().equals(ownerId)) {
-      throw new CustomException(NOT_SHOP_OWNER);
-    }
+  public void canceled() {
+    updateStatus(CANCELED);
   }
 
-  public void assertOwnerOrCustomer(Long ownerId) {
-    if (!this.getShop().getMember().getId().equals(ownerId)
+  public void checkOwnerOrCustomer(Long ownerId) {
+    if (!this.getShop().isShopOwner(ownerId)
         && !this.getMember().getId().equals(ownerId)) {
       throw new CustomException(NOT_OWNER_OR_CUSTOMER);
     }
   }
 
-  public void assertOrderIsPending() {
+  public void checkOrderIsPending() {
     if (this.orderStatus != OrderStatus.PENDING) {
       throw new CustomException(NOT_PENDING_ORDER);
     }
   }
 
-  public void assertOrderedBy(Long customerId) {
+  public void checkOrderedBy(Long customerId) {
     if (!this.getMember().getId().equals(customerId)) {
       throw new CustomException(NOT_ORDERED_BY_CUSTOMER);
     }
   }
 
-  public void assertExpiredCancelTime(Duration time) {
+  public void checkExpiredCancelTime(Duration time) {
     if (LocalDateTime.now().isAfter(this.getCreatedAt().plus(time))) {
       throw new CustomException(ORDER_CANCEL_EXPIRED);
     }
   }
 
-  public void assertAlreadyCanceled() {
+  public void checkAlreadyCanceled() {
     if (this.orderStatus == CANCELED) {
       throw new CustomException(ALREADY_CANCELED_ORDER);
     }
   }
 
-  public void assertAlreadyDeleted() {
+  public void checkAlreadyDeleted() {
     if (this.getDeletedAt() != null) {
       throw new CustomException(ALREADY_CANCELED_ORDER);
     }
+  }
+
+  private void updateStatus(OrderStatus orderStatus) {
+    this.orderStatus = orderStatus;
   }
 }
