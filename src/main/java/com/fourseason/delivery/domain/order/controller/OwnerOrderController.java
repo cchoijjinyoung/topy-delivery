@@ -1,17 +1,16 @@
 package com.fourseason.delivery.domain.order.controller;
 
-import com.fourseason.delivery.domain.order.dto.request.OwnerCreateOrderRequestDto;
+import com.fourseason.delivery.domain.order.dto.request.AcceptOfflineOrderRequestDto;
 import com.fourseason.delivery.domain.order.dto.response.impl.OwnerOrderSummaryResponseDto;
-import com.fourseason.delivery.domain.order.service.OrderOwnerService;
+import com.fourseason.delivery.domain.order.service.OrderService;
 import com.fourseason.delivery.global.auth.CustomPrincipal;
 import com.fourseason.delivery.global.dto.PageRequestDto;
 import com.fourseason.delivery.global.dto.PageResponseDto;
 import com.fourseason.delivery.global.resolver.PageSize;
-import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,36 +23,36 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequiredArgsConstructor
-@Secured("ROLE_OWNER")
+@PreAuthorize("hasRole('ROLE_OWNER')")
 @RequestMapping("/api/owner/orders")
 public class OwnerOrderController {
 
-  private final OrderOwnerService orderOwnerService;
+  private final OrderService orderService;
 
   /**
-   * 대면 주문 접수
+   * 오프라인 주문 접수
    */
   @PostMapping
-  public ResponseEntity<UUID> createOfflineOrder(
-      @RequestBody @Valid OwnerCreateOrderRequestDto request,
+  public ResponseEntity<Void> acceptOfflineOrder(
+      @RequestBody AcceptOfflineOrderRequestDto request,
       @AuthenticationPrincipal CustomPrincipal principal
   ) {
-    UUID orderId = orderOwnerService.createOfflineOrder(request, principal.getId());
+    UUID createdOrderId = orderService.createOfflineOrder(request, principal.getId());
     return ResponseEntity.created(
         UriComponentsBuilder.fromUriString("/api/orders/{orderId}")
-            .buildAndExpand(orderId)
+            .buildAndExpand(createdOrderId)
             .toUri()).build();
   }
 
   /**
-   * 점주 주문 수락 API
+   * 점주가 고객이 요청한 주문을 수락
    */
   @PostMapping("{orderId}/accept")
-  public ResponseEntity<UUID> acceptOrder(
+  public ResponseEntity<Void> acceptOrder(
       @PathVariable UUID orderId,
       @AuthenticationPrincipal CustomPrincipal principal
-      ) {
-    orderOwnerService.acceptOrder(orderId, principal.getId());
+  ) {
+    orderService.acceptOrder(orderId, principal.getId());
     return ResponseEntity.ok().build();
   }
 
@@ -62,7 +61,7 @@ public class OwnerOrderController {
    * @param shopId 가게로 필터링하기 위한 검색 조건
    */
   @GetMapping
-  public ResponseEntity<PageResponseDto<OwnerOrderSummaryResponseDto>> getOrderList(
+  public ResponseEntity<PageResponseDto<OwnerOrderSummaryResponseDto>> searchOrderList(
       @AuthenticationPrincipal CustomPrincipal principal,
       @RequestParam(required = false) String keyword,
       @RequestParam(required = false) UUID shopId,
@@ -71,6 +70,6 @@ public class OwnerOrderController {
       @RequestParam(defaultValue = "latest") String orderBy) {
     PageRequestDto pageRequestDto = PageRequestDto.of(page - 1, size, orderBy);
     return ResponseEntity.ok(
-        orderOwnerService.searchOrderList(principal.getId(), shopId, pageRequestDto, keyword));
+        orderService.searchBy(principal.getId(), shopId, pageRequestDto, keyword));
   }
 }

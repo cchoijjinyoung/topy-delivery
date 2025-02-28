@@ -1,9 +1,12 @@
 package com.fourseason.delivery.domain.shop.entity;
 
+import static com.fourseason.delivery.domain.shop.exception.ShopErrorCode.*;
+
 import com.fourseason.delivery.domain.member.entity.Member;
 import com.fourseason.delivery.domain.shop.dto.request.CreateShopRequestDto;
 import com.fourseason.delivery.domain.shop.dto.request.UpdateShopRequestDto;
 import com.fourseason.delivery.global.entity.BaseTimeEntity;
+import com.fourseason.delivery.global.exception.CustomException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -45,6 +48,16 @@ public class Shop extends BaseTimeEntity {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+    public boolean isShopOwner(Long memberId) {
+        return getMember().getId().equals(memberId);
+    }
+
+    public void checkShopOwner(Long memberId) {
+        if (!isShopOwner(memberId)) {
+            throw new CustomException(NOT_SHOP_OWNER);
+        }
+    }
 
     @Builder
     private Shop(String name, String description, String tel, String address, String detailAddress, Member member, Category category) {
